@@ -33,7 +33,7 @@ class dashboardController {
          LEFT JOIN payments p
          ON p.student_id = s.id
          AND date_trunc('month', p.paid_at) = date_trunc('month', $1::date)
-         WHERE date_trunc('month', e.start_date) <= date_trunc('month', $1::date)
+         WHERE date_trunc('month', e.joined_at) <= date_trunc('month', $1::date)
          GROUP BY s.id
          HAVING COALESCE(SUM(g.price), 0) - COALESCE(SUM(p.amount), 0) > 0
          ORDER BY debt DESC LIMIT 10;
