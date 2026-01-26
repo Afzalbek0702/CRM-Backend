@@ -43,5 +43,32 @@ class dashboardController {
 
 		res.json(result.rows);
 	}
+	async getTodayLessons(req, res) {
+		const result = await pool.query(`SELECT
+  g.id,
+  g.name AS group_name,
+  g.lesson_time,
+  g.lesson_days,
+  g.course_type,
+  t.full_name AS teacher_name,
+  COUNT(e.student_id) AS students_count
+   FROM groups g
+   LEFT JOIN teachers t ON t.id = g.teacher_id
+   LEFT JOIN enrollments e ON e.group_id = g.id
+   WHERE
+   (
+      (extract(dow from CURRENT_DATE) = 1 AND 'Mon' = ANY(g.lesson_days)) OR
+      (extract(dow from CURRENT_DATE) = 2 AND 'Tue' = ANY(g.lesson_days)) OR
+      (extract(dow from CURRENT_DATE) = 3 AND 'Wed' = ANY(g.lesson_days)) OR
+      (extract(dow from CURRENT_DATE) = 4 AND 'Thu' = ANY(g.lesson_days)) OR
+      (extract(dow from CURRENT_DATE) = 5 AND 'Fri' = ANY(g.lesson_days)) OR
+      (extract(dow from CURRENT_DATE) = 6 AND 'Sat' = ANY(g.lesson_days)) OR
+      (extract(dow from CURRENT_DATE) = 0 AND 'Sun' = ANY(g.lesson_days))
+   )
+   GROUP BY g.id, t.full_name
+   ORDER BY g.lesson_time;
+`);
+		res.json(result.rows);
+	}
 }
 export default new dashboardController();
