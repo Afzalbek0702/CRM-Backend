@@ -180,6 +180,37 @@ class Student_Controller {
 			console.log(error);
 		}
 	}
+	async removeStudentFromGroup(req, res) {
+		const studentId = req.params.studentId;
+		const { groupId } = req.body;
+
+		if (!groupId) {
+			return res.status(400).json({ msg: "groupId kerak!" });
+		}
+		try {
+			await pool.query("BEGIN");
+
+			const result = await pool.query(
+				`UPDATE enrollments SET status = 'ARCHIVED', archived_at = NOW() WHERE student_id = $1 AND group_id = $2 AND status = 'ACTIVE' RETURNING *;`,
+				[studentId, groupId],
+			);
+
+			if (result.rowCount === 0) {
+				return res.status(404).json({ msg: "Active enrollment not found" });
+			}
+
+			await pool.query("COMMIT");
+			res.json({
+				msg: "Student muvaffaqiyatli guruhdan o'chirildi",
+				enrollment: result.rows[0],
+			});
+		} catch (err) {
+			console.error(err);
+			res.status(500).json({ msg: "Server error", error: err });
+		} finally {
+			pool.release();
+		}
+	}
 }
 
 export default new Student_Controller();
