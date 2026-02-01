@@ -9,4 +9,5 @@ router.post("/", studentController.postStudent);
 router.put("/:id", studentController.updateStudent);
 router.patch("/:id/status", studentController.updateStudentStatus);
 router.delete("/:id", studentController.deleteStudent);
+router.post("/:id/transfer", studentController.transferStudent);
 export default router;

@@ -97,7 +97,7 @@ class Student_Controller {
 		}
 		try {
 			const { rows } = await pool.query(
-				"DELETE FROM students WHERE id = $1 RETURNING *",
+				`UPDATE students SET status = 'DELETED', deleted_at = NOW() WHERE id = $1 RETURNING *`,
 				[req.params.id],
 			);
 			res.json(rows[0]);
@@ -105,6 +105,7 @@ class Student_Controller {
 			res
 				.status(500)
 				.json({ msg: "O'quvchini o'chirishda xatolik yuz berdi", error });
+			console.log(error);
 		}
 	}
 	async getStudentProfile(req, res) {
@@ -148,6 +149,36 @@ class Student_Controller {
 			attendance: attendance.rows,
 			payments: payments.rows,
 		});
+	}
+	async transferStudent(req, res) {
+		const { student_id, from_group_id, to_group_id } = req.body;
+		console.log(student_id, from_group_id, to_group_id);
+
+		if (!student_id || !from_group_id || !to_group_id) {
+			return res
+				.status(400)
+				.json({ error: "student_id, from_group_id va to_group_id kerak" });
+		}
+		try {
+			await pool.query("BEGIN");
+			await pool.query(
+				`UPDATE enrollments SET status = 'ARCHIVED' WHERE student_id = $1 AND group_id = $2 AND status = 'ACTIVE'`,
+				[student_id, from_group_id],
+			);
+
+			await pool.query(
+				`INSERT INTO enrollments (student_id, group_id, status, joined_at) SELECT $1, $2, 'ACTIVE', NOW() WHERE NOT EXISTS (SELECT 1 FROM enrollments WHERE student_id = $1 AND group_id = $2 AND status = 'ACTIVE')`,
+				[student_id, to_group_id],
+			);
+			await pool.query("COMMIT");
+
+			res.json({ msg: "O'quvchi muvaffaqiyatli ko'chirildi" });
+		} catch (error) {
+			res
+				.status(500)
+				.json({ msg: "O'quvchini ko'chirishda xatolik yuz berdi", error });
+			console.log(error);
+		}
 	}
 }
 
