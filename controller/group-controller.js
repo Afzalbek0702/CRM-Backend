@@ -4,7 +4,7 @@ class Groups_Controller {
 	async getAllGroups(req, res) {
 		try {
 			const { rows } = await pool.query(
-				`SELECT g.id, g.name, g.price, g.course_type, g.lesson_time, g.lesson_days, t.full_name AS teacher FROM groups g JOIN teachers t ON t.id = g.teacher_id`
+				`SELECT g.id, g.name, g.price, g.course_type, g.lesson_time, g.lesson_days, g.status, t.full_name AS teacher FROM groups g JOIN teachers t ON t.id = g.teacher_id WHERE g.status = 'ACTIVE';`,
 			);
 			res.json(rows);
 		} catch (error) {
@@ -106,11 +106,20 @@ class Groups_Controller {
 			return res.status(400).json({ error: "Guruh ID si ko'rsatilmagan" });
 		}
 		try {
-			const { rows } = await pool.query(
-				"DELETE FROM groups WHERE id = $1 RETURNING *",
-				[req.params.id]
+			const groupResult = await pool.query(
+				`UPDATE groups SET status = 'ARCHIVED' WHERE id = $1 RETURNING *`,
+				[req.params.id],
 			);
-			res.json(rows[0]);
+
+			const enrollmentsResult = await pool.query(
+				`UPDATE enrollments SET status = 'FINISHED', end_date = CURRENT_DATE WHERE group_id = $1 RETURNING *`,
+				[req.params.id],
+			);
+			res.json({
+				group: groupResult.rows[0],
+				updatedEnrollments: enrollmentsResult.rows,
+				enrollmentCount: enrollmentsResult.rowCount,
+			});
 		} catch (error) {
 			res.status(500).json({ msg: "Guruhni o'chirishda xatolik yuz berdi", error });
 		}

@@ -20,5 +20,5 @@ app.get("/", (_, res) => {
 	res.send("Server is running...");
 });
 // Start the server
-const PORT = process.env.PORT || 5040;
+const PORT = process.env.PORT || 7000;
 app.listen(PORT);
