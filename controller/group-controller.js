@@ -4,7 +4,7 @@ class Groups_Controller {
 	async getAllGroups(req, res) {
 		try {
 			const { rows } = await pool.query(
-				`SELECT g.id, g.name, g.price, g.course_type, g.lesson_time, g.lesson_days, g.status, t.full_name AS teacher FROM groups g JOIN teachers t ON t.id = g.teacher_id WHERE g.status = 'ACTIVE';`,
+				`SELECT g.id, g.name, g.price, g.course_type, g.lesson_time, g.lesson_days, g.status,t.id AS teacher_id, t.full_name AS teacher FROM groups g JOIN teachers t ON t.id = g.teacher_id WHERE g.status = 'ACTIVE';`,
 			);
 			res.json(rows);
 		} catch (error) {
