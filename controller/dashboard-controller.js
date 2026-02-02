@@ -63,6 +63,7 @@ class dashboardController {
       (extract(dow from CURRENT_DATE) = 6 AND 'Sat' = ANY(g.lesson_days)) OR
       (extract(dow from CURRENT_DATE) = 0 AND 'Sun' = ANY(g.lesson_days))
    )
+   AND g.status = 'ACTIVE'
    GROUP BY g.id, t.full_name
    ORDER BY g.lesson_time;
 `);

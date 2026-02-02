@@ -53,7 +53,7 @@ class Groups_Controller {
 			return res.status(400).json({ error: "Guruh ID si ko'rsatilmagan" });
 		try {
 			const { rows } = await pool.query(
-				`SELECT s.id, s.full_name, s.phone FROM enrollments e JOIN students s ON s.id = e.student_id WHERE e.group_id = $1 AND e.status = 'ACTIVE'`,
+				`SELECT s.id, s.full_name, s.phone FROM enrollments e JOIN students s ON s.id = e.student_id WHERE e.group_id = $1 AND e.status = 'ACTIVE' AND s.status = 'ACTIVE';`,
 				[req.params.id]
 			);
 			res.json(rows);
