@@ -35,7 +35,7 @@ class attendanceController {
 
 		try {
 			// Guruhdagi dars kunlarini olish
-			const groupQuery = `SELECT lesson_days FROM groups WHERE id = $1`;
+			const groupQuery = `SELECT lesson_days FROM groups WHERE id = $1 AND status = 'ACTIVE'`;
 			const groupResult = await pool.query(groupQuery, [group_id]);
 
 			if (groupResult.rows.length === 0) {
@@ -63,7 +63,7 @@ class attendanceController {
 			}
 
 			// Guruhdagi o'quvchilarni olish
-			const studentsQuery = `SELECT s.id, s.full_name FROM students s JOIN enrollments e ON s.id = e.student_id WHERE e.group_id = $1 AND e.status = 'ACTIVE' ORDER BY s.full_name`;
+			const studentsQuery = `SELECT s.id, s.full_name FROM students s JOIN enrollments e ON s.id = e.student_id WHERE e.group_id = $1 AND e.status = 'ACTIVE' AND s.status = 'ACTIVE' ORDER BY s.full_name`;
 			const studentsResult = await pool.query(studentsQuery, [group_id]);
 
 			const attendanceData = [];
