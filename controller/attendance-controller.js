@@ -63,7 +63,7 @@ class attendanceController {
 			}
 
 			// Guruhdagi o'quvchilarni olish
-			const studentsQuery = `SELECT s.id, s.full_name FROM students s JOIN enrollments e ON s.id = e.student_id WHERE e.group_id = $1 ORDER BY s.full_name`;
+			const studentsQuery = `SELECT s.id, s.full_name FROM students s JOIN enrollments e ON s.id = e.student_id WHERE e.group_id = $1 AND e.status = 'ACTIVE' ORDER BY s.full_name`;
 			const studentsResult = await pool.query(studentsQuery, [group_id]);
 
 			const attendanceData = [];
