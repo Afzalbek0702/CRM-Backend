@@ -3,7 +3,7 @@ import pool from "../lib/db.js";
 class Student_Controller {
 	async getAllStudents(req, res) {
 		try {
-			const { rows } = await pool.query("SELECT * FROM students");
+			const { rows } = await pool.query("SELECT * FROM students wHERE status != 'DELETED';");
 			res.json(rows);
 		} catch (error) {
 			res
