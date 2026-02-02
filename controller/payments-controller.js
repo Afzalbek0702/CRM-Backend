@@ -13,19 +13,21 @@ class PaymentsController {
 		}
 	}
 	async createPayment(req, res) {
-		const { student_id, group_id, amount, type, paid_month } = req.body;
-		if (!student_id || !group_id || !amount || !type || !paid_month) {
+		const { student_id, group_id, amount, method, paid_month } = req.body;
+		if (!student_id || !group_id || !amount || !method || !paid_month) {
 			return res
 				.status(400)
 				.json({ error: "Barcha maydonlar to'ldirilishi kerak" });
 		}
 		try {
 			const { rows } = await pool.query(
-				"INSERT INTO payments (student_id, group_id, amount, type, paid_month) VALUES ($1, $2, $3, $4, $5) RETURNING *;",
-				[student_id, group_id, amount, type, paid_month]
+				"INSERT INTO payments (student_id, group_id, amount, method, paid_month) VALUES ($1, $2, $3, $4, $5) RETURNING *;",
+				[student_id, group_id, amount, method, paid_month]
 			);
 			res.json(rows[0]);
-		} catch (error) {
+      } catch (error) {
+         console.log(error);
+         
 			res.status(500).json({ msg: "To'lov yaratishda xatolik yuz berdi", error });
 		}
 	}
