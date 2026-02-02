@@ -3,7 +3,43 @@ import pool from "../lib/db.js";
 class Student_Controller {
 	async getAllStudents(req, res) {
 		try {
-			const { rows } = await pool.query("SELECT * FROM students wHERE status != 'DELETED';");
+			const { rows } = await pool.query(
+				`SELECT
+  s.id,
+  s.full_name,
+  s.phone,
+  s.status,
+
+  -- aktiv guruhlar
+  COALESCE(
+    array_agg(DISTINCT g.name)
+      FILTER (WHERE e.status = 'ACTIVE'),
+    '{}'
+  ) AS groups,
+
+  -- faqat joriy oy to‘lovlari
+  COALESCE(
+    SUM(p.amount) FILTER (
+      WHERE date_trunc('month', p.paid_at) = date_trunc('month', CURRENT_DATE)
+    ),
+    0
+  ) AS monthly_paid,
+
+  -- joriy oy oxirgi to‘lov sanasi
+  MAX(p.paid_at) FILTER (
+    WHERE date_trunc('month', p.paid_at) = date_trunc('month', CURRENT_DATE)
+  ) AS last_monthly_payment
+
+FROM students s
+LEFT JOIN enrollments e ON e.student_id = s.id
+LEFT JOIN groups g ON g.id = e.group_id
+LEFT JOIN payments p ON p.student_id = s.id
+
+WHERE s.status != 'DELETED'
+GROUP BY s.id
+ORDER BY s.full_name;
+`,
+			);
 			res.json(rows);
 		} catch (error) {
 			res
