@@ -9,7 +9,9 @@ class Student_Controller {
   s.full_name,
   s.phone,
   s.status,
-
+  s.birthday,
+  s.parents_name,
+  s.deleted_at,
   -- aktiv guruhlar
   COALESCE(
     array_agg(DISTINCT g.name)
