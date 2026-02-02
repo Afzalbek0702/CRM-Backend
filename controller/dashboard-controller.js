@@ -5,16 +5,14 @@ class dashboardController {
 		const { from, to } = req.query;
 
 		const result = await pool.query(
-			`
-    SELECT
-      date_trunc('month', paid_at) AS month,
-      SUM(amount) AS total_income
-    FROM payments
-    WHERE paid_at BETWEEN $1 AND $2
-    GROUP BY month
-    ORDER BY month
+			`SELECT date_trunc('month', paid_at) AS month, SUM(amount) AS total_income FROM payments WHERE paid_at BETWEEN $1 AND $2 GROUP BY month ORDER BY month
     `,
-			[from, to],
+			[
+				from,
+				to.slice(5, 10) == "02-31"
+					? to.slice(0, 5) + "02-28"
+					: to.slice(0, 5) + "02-31",
+			],
 		);
 
 		res.json(result.rows);
