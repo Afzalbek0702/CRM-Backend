@@ -181,7 +181,7 @@ class Student_Controller {
 		}
 	}
 	async removeStudentFromGroup(req, res) {
-		const studentId = req.params.studentId;
+		const studentId = req.params.id;
 		const { groupId } = req.body;
 
 		if (!groupId) {
