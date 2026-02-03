@@ -11,6 +11,7 @@ class Student_Controller {
   s.status,
   s.birthday,
   s.parents_name,
+  s.parents_phone,
   s.deleted_at,
   -- aktiv guruhlar
   COALESCE(
@@ -66,16 +67,16 @@ ORDER BY s.full_name;
 		}
 	}
 	async postStudent(req, res) {
-		const { full_name, phone, birthday, parents_name } = req.body;
-		if (!full_name || !phone || !birthday || !parents_name) {
+		const { full_name, phone, birthday, parents_name, parents_phone } = req.body;
+		if (!full_name || !phone || !birthday || !parents_name || !parents_phone) {
 			return res
 				.status(400)
-				.json({ error: "full_name, phone, birthday va parents_name kerak" });
+				.json({ error: "full_name, phone, birthday, parents_name va parents_phone kerak" });
 		}
 		try {
 			const { rows } = await pool.query(
-				"INSERT INTO students (full_name, phone, birthday, parents_name) VALUES ($1, $2, $3, $4) RETURNING *",
-				[full_name, phone, birthday, parents_name],
+				"INSERT INTO students (full_name, phone, birthday, parents_name, parents_phone) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+				[full_name, phone, birthday, parents_name, parents_phone],
 			);
 			res.json(rows[0]);
 		} catch (error) {
