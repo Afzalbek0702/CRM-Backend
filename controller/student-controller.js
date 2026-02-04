@@ -4,7 +4,27 @@ class Student_Controller {
 	async getAllStudents(req, res) {
 		try {
 			const { rows } = await pool.query(
-				`SELECT
+				`WITH current_month_payments AS (
+  -- Faqat joriy oy to'lovlari bo'yicha yig'indisi va oxirgi sana
+  SELECT 
+    student_id,
+    SUM(amount) AS monthly_paid,
+    MAX(paid_at) AS last_monthly_payment
+  FROM payments
+  WHERE date_trunc('month', paid_at) = date_trunc('month', CURRENT_DATE)
+  GROUP BY student_id
+),
+active_groups AS (
+  -- Faqat faol guruhlar nomlari
+  SELECT 
+    e.student_id,
+    array_agg(DISTINCT g.name) AS groups
+  FROM enrollments e
+  JOIN groups g ON g.id = e.group_id
+  WHERE e.status = 'ACTIVE'
+  GROUP BY e.student_id
+)
+SELECT
   s.id,
   s.full_name,
   s.phone,
@@ -13,35 +33,14 @@ class Student_Controller {
   s.parents_name,
   s.parents_phone,
   s.deleted_at,
-  -- aktiv guruhlar
-  COALESCE(
-    array_agg(DISTINCT g.name)
-      FILTER (WHERE e.status = 'ACTIVE'),
-    '{}'
-  ) AS groups,
-
-  -- faqat joriy oy to‘lovlari
-  COALESCE(
-    SUM(p.amount) FILTER (
-      WHERE date_trunc('month', p.paid_at) = date_trunc('month', CURRENT_DATE)
-    ),
-    0
-  ) AS monthly_paid,
-
-  -- joriy oy oxirgi to‘lov sanasi
-  MAX(p.paid_at) FILTER (
-    WHERE date_trunc('month', p.paid_at) = date_trunc('month', CURRENT_DATE)
-  ) AS last_monthly_payment
-
+  COALESCE(ag.groups, '{}') AS groups,
+  COALESCE(cmp.monthly_paid, 0) AS monthly_paid,
+  cmp.last_monthly_payment
 FROM students s
-LEFT JOIN enrollments e ON e.student_id = s.id
-LEFT JOIN groups g ON g.id = e.group_id
-LEFT JOIN payments p ON p.student_id = s.id
-
+LEFT JOIN active_groups ag ON ag.student_id = s.id
+LEFT JOIN current_month_payments cmp ON cmp.student_id = s.id
 WHERE s.status != 'DELETED'
-GROUP BY s.id
-ORDER BY s.full_name;
-`,
+ORDER BY s.full_name;`,
 			);
 			res.json(rows);
 		} catch (error) {
