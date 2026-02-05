@@ -11,5 +11,9 @@ router.get(
 );
 router.get("/top-debtors", requireRole("admin", "manager"), dashboardController.getTopDebtors);
 router.get("/today-lessons", requireRole("admin", "manager"), dashboardController.getTodayLessons);
-
+router.get(
+   "/absent-students",
+   requireRole("admin", "manager"),
+   dashboardController.getAbsentStudents,
+);
 export default router;

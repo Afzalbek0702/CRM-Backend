@@ -69,5 +69,27 @@ class dashboardController {
 `);
 		res.json(result.rows);
 	}
+	async getAbsentStudents(req, res) {
+		const { groupId } = req.params;
+
+		const query = `
+    SELECT * FROM students s
+    JOIN enrollments e ON s.id = e.student_id
+    LEFT JOIN attendance a ON s.id = a.student_id 
+      AND a.group_id = e.group_id 
+      AND a.date = CURRENT_DATE
+    WHERE e.group_id = $1
+      AND (a.status IS NULL OR a.status = false)
+    ORDER BY s.full_name
+  `;
+
+		try {
+			const result = await pool.query(query, [groupId]);
+			res.json(result.rows);
+		} catch (err) {
+			console.error(err);
+			res.status(500).json({ msg: "Xatolik yuz berdi",err });
+		}
+	}
 }
 export default new dashboardController();
