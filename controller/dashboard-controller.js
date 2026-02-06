@@ -70,21 +70,30 @@ class dashboardController {
 		res.json(result.rows);
 	}
 	async getAbsentStudents(req, res) {
-		const { groupId } = req.params;
 
-		const query = `
-    SELECT * FROM students s
-    JOIN enrollments e ON s.id = e.student_id
-    LEFT JOIN attendance a ON s.id = a.student_id 
-      AND a.group_id = e.group_id 
-      AND a.date = CURRENT_DATE
-    WHERE e.group_id = $1
-      AND (a.status IS NULL OR a.status = false)
-    ORDER BY s.full_name
-  `;
+
+      const query = `SELECT 
+      g.name AS group_name,
+      s.id AS student_id,
+      s.full_name,
+      s.phone,
+      s.parents_name,
+      s.parents_phone
+      FROM groups g
+      JOIN enrollments e ON g.id = e.group_id
+      JOIN students s ON e.student_id = s.id
+      LEFT JOIN attendance a ON s.id = a.student_id 
+      AND a.group_id = g.id 
+      AND a.lesson_date = CURRENT_DATE
+      WHERE LOWER(TO_CHAR(CURRENT_DATE, 'Dy')) = ANY(
+      SELECT LOWER(unnest(g.lesson_days)))
+      AND SPLIT_PART(g.lesson_time, ' - ', 1)::TIME <= CURRENT_TIME
+      AND (a.status IS NULL OR a.status = false) 
+      AND s.status = 'ACTIVE' AND g.status = 'ACTIVE'
+      ORDER BY g.name, s.full_name`;
 
 		try {
-			const result = await pool.query(query, [groupId]);
+			const result = await pool.query(query);
 			res.json(result.rows);
 		} catch (err) {
 			console.error(err);
