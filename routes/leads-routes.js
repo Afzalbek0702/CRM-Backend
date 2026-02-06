@@ -1,0 +1,9 @@
+import { Router } from "express";
+import LeadsController from "../controller/leads-controller.js";
+const router = Router();
+
+router.post("/", LeadsController.createLead);
+router.get("/", LeadsController.getLeads);
+router.post("/:id/convert-to-group", LeadsController.convertLeadToGroup);
+router.delete("/:id", LeadsController.deleteLead);
+export default router;
