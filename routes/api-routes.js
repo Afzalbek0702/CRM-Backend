@@ -8,6 +8,7 @@ import attendanceRoutes from "./attendance-routes.js";
 import userRoutes from "./user-routes.js";
 import dashboardRoutes from "./dashboard-routes.js";
 import leadsRoutes from "./leads-routes.js";
+import archiveRoutes from "./archive-routes.js";
 const router = Router();
 
 router.use("/groups", groupsRouter);
@@ -19,5 +20,6 @@ router.use("/payments", paymentsRoutes);
 router.use("/attendance", attendanceRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/leads", leadsRoutes)
+router.use("/archive", archiveRoutes)
 
 export default router;

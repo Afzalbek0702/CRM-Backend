@@ -3,7 +3,7 @@ class PaymentsController {
 	async getAllPayments(req, res) {
 		try {
 			const { rows } =
-				await pool.query(`SELECT p.id, p.amount, p.paid_at, p.paid_month, p.method, s.full_name AS student_name, g.name AS group_name FROM payments p JOIN students s ON s.id = p.student_id JOIN groups g ON g.id = p.group_id ORDER BY p.paid_at DESC;
+				await pool.query(`SELECT p.id, p.amount, p.paid_at, p.paid_month, p.method, s.full_name AS student_name, g.name AS group_name FROM payments p JOIN students s ON s.id = p.student_id JOIN groups g ON g.id = p.group_id WHERE p.status != 'DELETED' ORDER BY p.paid_at DESC;
 `);
 			res.json(rows);
 		} catch (error) {
@@ -68,7 +68,7 @@ class PaymentsController {
 		if (!req.params.id)
 			return res.status(400).json({ error: "ID maydoni to'ldirilishi kerak" });
 		try {
-			await pool.query("DELETE FROM payments WHERE id = $1;", [req.params.id]);
+			await pool.query("UPDATE payments SET status = 'DELETED', deleted_at = NOW() WHERE id = $1;", [req.params.id]);
 			res.json({ message: "Payment mufaqqiyatli o'chirildi" });
 		} catch (error) {
 			res.status(500).json({ msg: "To'lovni o'chirishda xatolik yuz berdi", error });
