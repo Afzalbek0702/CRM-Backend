@@ -1,254 +1,166 @@
 import pool from "../lib/db.js";
+import studentRepo from "../repositories/studentRepo.js";
+import { sendSuccess, sendError } from "../lib/response.js";
 
-class Student_Controller {
-	async getAllStudents(req, res) {
-		try {
-			const { rows } = await pool.query(
-				`WITH current_month_payments AS (
-  -- Faqat joriy oy to'lovlari bo'yicha yig'indisi va oxirgi sana
-  SELECT 
-    student_id,
-    SUM(amount) AS monthly_paid,
-    MAX(paid_at) AS last_monthly_payment
-  FROM payments
-  WHERE date_trunc('month', paid_at) = date_trunc('month', CURRENT_DATE)
-  GROUP BY student_id
-),
-active_groups AS (
-  -- Faqat faol guruhlar nomlari
-  SELECT 
-    e.student_id,
-    array_agg(DISTINCT g.name) AS groups
-  FROM enrollments e
-  JOIN groups g ON g.id = e.group_id
-  WHERE e.status = 'ACTIVE'
-  GROUP BY e.student_id
-)
-SELECT
-  s.id,
-  s.full_name,
-  s.phone,
-  s.status,
-  s.birthday,
-  s.parents_name,
-  s.parents_phone,
-  s.deleted_at,
-  COALESCE(ag.groups, '{}') AS groups,
-  COALESCE(cmp.monthly_paid, 0) AS monthly_paid,
-  cmp.last_monthly_payment
-FROM students s
-LEFT JOIN active_groups ag ON ag.student_id = s.id
-LEFT JOIN current_month_payments cmp ON cmp.student_id = s.id
-WHERE s.status != 'DELETED'
-ORDER BY s.full_name;`,
-			);
-			res.json(rows);
-		} catch (error) {
-			res
-				.status(500)
-				.json({ msg: "O'quvchilarni olishda xatolik yuz berdi", error });
-		}
-	}
-	async getSingleStudents(req, res) {
-		if (!req.params.id) {
-			return res.status(400).json({ error: "ID kerak" });
-		}
-		try {
-			const { rows } = await pool.query(
-				"SELECT * FROM students WHERE id = $1;",
-				[req.params.id],
-			);
-			res.json(rows[0]);
-		} catch (error) {
-			res
-				.status(500)
-				.json({ msg: "O'quvchini olishda xatolik yuz berdi", error });
-		}
-	}
-	async postStudent(req, res) {
-		const { full_name, phone, birthday, parents_name, parents_phone } = req.body;
-		if (!full_name || !phone || !birthday || !parents_name || !parents_phone) {
-			return res
-				.status(400)
-				.json({ error: "full_name, phone, birthday, parents_name va parents_phone kerak" });
-		}
-		try {
-			const { rows } = await pool.query(
-				"INSERT INTO students (full_name, phone, birthday, parents_name, parents_phone) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-				[full_name, phone, birthday, parents_name, parents_phone],
-			);
-			res.json(rows[0]);
-		} catch (error) {
-			res
-				.status(500)
-				.json({ msg: "O'quvchini qo'shishda xatolik yuz berdi", error });
-		}
-	}
-	async updateStudent(req, res) {
-		if (!req.params.id) {
-			return res.status(400).json({ error: "ID kerak" });
-		}
-		const { full_name, phone, birthday, parents_name } = req.body;
-		if (!full_name || !phone || !birthday || !parents_name) {
-			return res
-				.status(400)
-				.json({ error: "full_name, phone, birthday va parents_name kerak" });
-		}
-		try {
-			const { rows } = await pool.query(
-				"UPDATE students SET full_name = $1, phone = $2, birthday = $3, parents_name = $4 WHERE id = $5 RETURNING *",
-				[full_name, phone, birthday, parents_name, req.params.id],
-			);
-			res.json(rows[0]);
-		} catch (error) {
-			res
-				.status(500)
-				.json({ msg: "O'quvchini yangilashda xatolik yuz berdi", error });
-		}
-	}
-	async updateStudentStatus(req, res) {
-		const { status } = req.body;
-		if (!req.params.id || !status) {
-			return res.status(400).json({ error: "ID va status kerak" });
-		}
-
-		const allowed = ["active", "frozen", "finished", "debtor"];
-		if (!allowed.includes(status)) {
-			return res.status(400).json({ message: "Noto‘g‘ri status" });
-		}
-		try {
-			await pool.query("UPDATE students SET status = $1 WHERE id = $2", [
-				status,
-				req.params.id,
-			]);
-
-			res.json({ message: "Status yangilandi" });
-		} catch (error) {
-			res
-				.status(500)
-				.json({ msg: "O'quvchini yangilashda xatolik yuz berdi", error });
-		}
-	}
-	async deleteStudent(req, res) {
-		if (!req.params.id) {
-			return res.status(400).json({ error: "ID kerak" });
-		}
-		try {
-			const { rows } = await pool.query(
-				`UPDATE students SET status = 'DELETED', deleted_at = NOW() WHERE id = $1 RETURNING *`,
-				[req.params.id],
-			);
-			res.json(rows[0]);
-		} catch (error) {
-			res
-				.status(500)
-				.json({ msg: "O'quvchini o'chirishda xatolik yuz berdi", error });
-			console.log(error);
-		}
-	}
-	async getStudentProfile(req, res) {
-		const { id } = req.params;
-
-		const studentSql = `SELECT
-      s.id,
-      s.full_name,
-      s.phone,
-      s.status,
-      COALESCE(SUM(g.price),0) - COALESCE(SUM(p.amount),0) AS balance
-      FROM students s
-      LEFT JOIN enrollments e ON e.student_id = s.id
-      LEFT JOIN groups g ON g.id = e.group_id
-      LEFT JOIN payments p ON p.student_id = s.id
-      WHERE s.id = $1
-      GROUP BY s.id;`;
-		const attendanceSql = `SELECT
-      a.lesson_date,
-      a.status,
-      g.name AS group_name
-      FROM attendance a
-      JOIN groups g ON g.id = a.group_id
-      WHERE a.student_id = $1
-      ORDER BY a.lesson_date DESC;`;
-		const paymentsSql = `SELECT
-      p.amount,
-      p.paid_at,
-      g.name AS group_name
-      FROM payments p
-      LEFT JOIN groups g ON g.id = p.group_id
-      WHERE p.student_id = $1
-      ORDER BY p.paid_at DESC;`;
-
-		const student = await pool.query(studentSql, [id]);
-		const attendance = await pool.query(attendanceSql, [id]);
-		const payments = await pool.query(paymentsSql, [id]);
-
-		res.json({
-			student: student.rows[0],
-			attendance: attendance.rows,
-			payments: payments.rows,
-		});
-	}
-	async transferStudent(req, res) {
-		const { student_id, from_group_id, to_group_id } = req.body;
-		console.log(student_id, from_group_id, to_group_id);
-
-		if (!student_id || !from_group_id || !to_group_id) {
-			return res
-				.status(400)
-				.json({ error: "student_id, from_group_id va to_group_id kerak" });
-		}
-		try {
-			await pool.query("BEGIN");
-			await pool.query(
-				`UPDATE enrollments SET status = 'ARCHIVED' WHERE student_id = $1 AND group_id = $2 AND status = 'ACTIVE'`,
-				[student_id, from_group_id],
-			);
-
-			await pool.query(
-				`INSERT INTO enrollments (student_id, group_id, status, joined_at) SELECT $1, $2, 'ACTIVE', NOW() WHERE NOT EXISTS (SELECT 1 FROM enrollments WHERE student_id = $1 AND group_id = $2 AND status = 'ACTIVE')`,
-				[student_id, to_group_id],
-			);
-			await pool.query("COMMIT");
-
-			res.json({ msg: "O'quvchi muvaffaqiyatli ko'chirildi" });
-		} catch (error) {
-			res
-				.status(500)
-				.json({ msg: "O'quvchini ko'chirishda xatolik yuz berdi", error });
-			console.log(error);
-		}
-	}
-	async removeStudentFromGroup(req, res) {
-		const studentId = req.params.id;
-		const { groupId } = req.body;
-
-		if (!groupId) {
-			return res.status(400).json({ msg: "groupId kerak!" });
-		}
-		try {
-			await pool.query("BEGIN");
-
-			const result = await pool.query(
-				`UPDATE enrollments SET status = 'ARCHIVED', archived_at = NOW() WHERE student_id = $1 AND group_id = $2 AND status = 'ACTIVE' RETURNING *;`,
-				[studentId, groupId],
-			);
-
-			if (result.rowCount === 0) {
-				return res.status(404).json({ msg: "Active enrollment not found" });
-			}
-
-			await pool.query("COMMIT");
-			res.json({
-				msg: "Student muvaffaqiyatli guruhdan o'chirildi",
-				enrollment: result.rows[0],
-			});
-		} catch (err) {
-			console.error(err);
-			res.status(500).json({ msg: "Server error", error: err });
-		} finally {
-			pool.release();
-		}
+export async function getAllStudents(req, res) {
+	try {
+		const rows = await studentRepo.getAll();
+		sendSuccess(res, rows, "O'quvchi topildi", 200);
+	} catch (error) {
+		sendError(res, "O'quvchilarni olishda xatolik yuz berdi", 500, error);
 	}
 }
+export async function getSingleStudent(req, res) {
+	if (!req.params.id) {
+		return sendError(res, "ID kerak", 400);
+	}
+	try {
+		const student = await studentRepo.getById(req.params.id);
+		if (!student) {
+			return sendError(res, "O'quvchi topilmadi", 404);
+		}
+		sendSuccess(res, student, "O'quvchi topildi", 200);
+	} catch (error) {
+		res
+			.status(500)
+			.json({ msg: "O'quvchini olishda xatolik yuz berdi", error });
+	}
+}
+export async function createStudent(req, res) {
+	const { full_name, phone, birthday, parents_name, parents_phone } = req.body;
+	if (!full_name || !phone || !birthday || !parents_name || !parents_phone) {
+		return sendError(
+			res,
+			"full_name, phone, birthday, parents_name va parents_phone kerak",
+			400,
+		);
+	}
+	try {
+		const newStudent = await studentRepo.create({
+			full_name,
+			phone,
+			birthday,
+			parents_name,
+			parents_phone,
+		});
+		sendSuccess(res, newStudent, "O'quvchi muvaffaqiyatli qo'shildi", 201);
+	} catch (error) {
+		sendError(res, "O'quvchini qo'shishda xatolik yuz berdi", 500, error);
+	}
+}
+export async function updateStudent(req, res) {
+	if (!req.params.id) {
+		return sendError(res, "ID kerak", 400);
+	}
+	const { full_name, phone, birthday, parents_name } = req.body;
+	if (!full_name || !phone || !birthday || !parents_name) {
+		return sendError(
+			res,
+			"full_name, phone, birthday va parents_name kerak",
+			400,
+		);
+	}
+	try {
+		const updatedStudent = await studentRepo.update(req.params.id, {
+			full_name,
+			phone,
+			birthday,
+			parents_name,
+		});
+		if (!updatedStudent) {
+			return sendError(res, "O'quvchi topilmadi", 404);
+		}
+		sendSuccess(res, updatedStudent, "O'quvchi muvaffaqiyatli yangilandi", 200);
+	} catch (error) {
+		sendError(res, "O'quvchini yangilashda xatolik yuz berdi", 500, error);
+	}
+}
+export async function updateStudentStatus(req, res) {
+	const { status } = req.body;
+	if (!req.params.id || !status) {
+		return sendError(res, "ID va status kerak", 400);
+	}
 
-export default new Student_Controller();
+	const allowed = ["active", "frozen", "finished", "debtor"];
+	if (!allowed.includes(status)) {
+		return sendError(res, "Noto‘g‘ri status", 400);
+	}
+	try {
+		await studentRepo.updateStatus(req.params.id, status.toUpperCase());
+		sendSuccess(res, null, "O'quvchi statusi muvaffaqiyatli yangilandi", 200);
+	} catch (error) {
+		sendError(res, "O'quvchini yangilashda xatolik yuz berdi", 500, error);
+	}
+}
+export async function deleteStudent(req, res) {
+	if (!req.params.id) {
+		return sendError(res, "ID kerak", 400);
+	}
+	try {
+		await studentRepo.softDelete(req.params.id);
+		sendSuccess(res, null, "O'quvchi muvaffaqiyatli o'chirildi", 200);
+	} catch (error) {
+		sendError(res, "O'quvchini o'chirishda xatolik yuz berdi", 500, error);
+	}
+}
+export async function getStudentProfile(req, res) {
+	const { id } = req.params;
+
+	if (!id) return sendError(res, "ID kerak", 400);
+
+	try {
+		const profile = await studentRepo.getStudentProfile(id);
+		if (!profile) {
+			return sendError(res, "O'quvchi topilmadi", 404);
+		}
+		sendSuccess(res, profile, "O'quvchi profili topildi", 200);
+	} catch (error) {
+		sendError(res, "O'quvchi profilini olishda xatolik yuz berdi", 500, error);
+	}
+}
+export async function transferStudent(req, res) {
+	const { student_id, from_group_id, to_group_id } = req.body;
+
+	if (!student_id || !from_group_id || !to_group_id) {
+		return sendError(
+			res,
+			"student_id, from_group_id va to_group_id kerak",
+			400,
+		);
+	}
+	try {
+		await studentRepo.transferStudent({
+			student_id,
+			from_group_id,
+			to_group_id,
+		});
+		sendSuccess(res, null, "O'quvchi muvaffaqiyatli ko'chirildi", 200);
+	} catch (error) {
+		await pool.query("ROLLBACK");
+		sendError(res, "O'quvchini ko'chirishda xatolik yuz berdi", 500, error);
+	}
+}
+export async function removeStudentFromGroup(req, res) {
+	const studentId = req.params.id;
+	const { groupId } = req.body;
+
+	if (!groupId || isNaN(groupId) || !studentId) {
+		return sendError(
+			res,
+			"groupId yoki studentId kerak va to'g'ri formatda bo'lishi kerak!",
+			400,
+		);
+	}
+	try {
+		await studentRepo.removeStudentFromGroup(studentId, groupId);
+		sendSuccess(res, null, "O'quvchi muvaffaqiyatli guruhdan o'chirildi", 200);
+	} catch (err) {
+		await pool.query("ROLLBACK");
+		sendError(
+			res,
+			"O'quvchini guruhdan o'chirishda xatolik yuz berdi",
+			500,
+			err,
+		);
+	}
+}

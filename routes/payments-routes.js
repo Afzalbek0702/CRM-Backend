@@ -1,5 +1,5 @@
 import { Router } from "express";
-import paymentController from "../controller/payments-controller.js";
+import * as paymentController from "../controller/payments-controller.js";
 import { requireRole } from "../lib/roleMiddleware.js";
 const router = Router();
 

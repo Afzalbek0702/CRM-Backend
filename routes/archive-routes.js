@@ -1,5 +1,5 @@
 import { Router } from "express";
-import ArchiveController from "../controller/archive-controller.js";
+import * as ArchiveController from "../controller/archive-controller.js";
 const router = Router();
 
 router.get("/payments", ArchiveController.getAllArchivedPayments);

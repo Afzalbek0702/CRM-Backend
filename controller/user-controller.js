@@ -1,29 +1,30 @@
-import pool from "../lib/db.js";
+import userRepo from "../repositories/userRepo.js";
+import { sendError, sendSuccess } from "../lib/response.js";
 
-class userController {
-	async getUsers(req, res) {
-		const result = await pool.query(
-			`SELECT id, full_name, email, role
-     FROM users
-     ORDER BY created_at DESC`,
-		);
-
-		res.json(result.rows);
-	}
-	async updateUserRole(req, res) {
-		const { role } = req.body;
-
-		await pool.query("UPDATE users SET role = $1 WHERE id = $2", [
-			role,
-			req.params.id,
-		]);
-
-		res.json({ message: "Role updated" });
-	}
-	async deleteUser(req, res) {
-		await pool.query("DELETE FROM users WHERE id = $1", [req.params.id]);
-
-		res.json({ message: "User deleted" });
+export async function getUsers(req, res) {
+	try {
+		const users = await userRepo.getAll();
+		sendSuccess(res, users, "Users retrieved successfully", 200);
+	} catch (error) {
+		sendError(res, "Failed to retrieve users", 500, error);
 	}
 }
-export default new userController();
+export async function updateUserRole(req, res) {
+	const { id } = req.params;
+	const { role } = req.body;
+	try {
+		await userRepo.updateRole(id, role);
+		sendSuccess(res, null, "User role updated successfully", 200);
+	} catch (error) {
+		sendError(res, "Failed to update user role", 500, error);
+	}
+}
+export async function deleteUser(req, res) {
+	const { id } = req.params;
+	try {
+		await userRepo.deleteById(id);
+		sendSuccess(res, null, "User deleted successfully", 200);
+	} catch (error) {
+		sendError(res, "Failed to delete user", 500, error);
+	}
+}

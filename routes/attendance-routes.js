@@ -1,5 +1,5 @@
 import { Router } from "express";
-import AttendanceController from "../controller/attendance-controller.js";
+import * as AttendanceController from "../controller/attendance-controller.js";
 const router = Router();
 
 router.get("/", AttendanceController.getAttendance);

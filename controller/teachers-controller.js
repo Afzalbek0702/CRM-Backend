@@ -1,79 +1,55 @@
-import pool from "../lib/db.js";
+import teacherRepo from "../repositories/teacherRepo.js";
+import { sendSuccess, sendError } from "../lib/response.js";
 
-class Teachers_Controller {
-	async getAllTeachers(req, res) {
-		try {
-			const { rows } = await pool.query("SELECT * FROM teachers;");
-			res.json(rows);
-		} catch (error) {
-			res
-				.status(500)
-				.json({ msg: "O'qituvchilarni olishda xatolik yuz berdi", error });
-		}
-	}
-	async postTeacher(req, res) {
-		const { full_name, phone } = req.body;
-		if (!full_name || !phone) {
-			return res.status(401).send({ error: "To'liq ma'lumot kiriting" });
-		}
-		try {
-			const { rows } = await pool.query(
-				"INSERT INTO teachers (full_name, phone) VALUES ($1, $2) RETURNING *",
-				[full_name, phone]
-			);
-			res.json(rows[0]);
-		} catch (error) {
-			res
-				.status(500)
-				.json({ msg: "O'qituvchilarni qo'shishda xatolik yuz berdi", error });
-		}
-	}
-	async getTeacherById(req, res) {
-		if (!req.params.id) {
-			return res.status(401).send({ error: "ID kiriting" });
-		}
-		try {
-			const { rows } = await pool.query(
-				"SELECT * FROM teachers WHERE id = $1;",
-				[req.params.id]
-			);
-			res.json(rows[0]);
-		} catch (error) {
-			res.status(500).json({ msg: "O'qituvchini olishda xatolik yuz berdi", error });
-		}
-	}
-	async updateTeacher(req, res) {
-		if (!req.params.id) {
-			res.status(401).send({ error: "ID kiriting" });
-		}
-		const { full_name, phone } = req.body;
-		if (!full_name || !phone) {
-			return res.status(401).send({ error: "To'liq ma'lumot kiriting" });
-		}
-		try {
-			const { rows } = await pool.query(
-				"UPDATE teachers SET full_name = $1, phone = $2 WHERE id = $3 RETURNING *;",
-				[full_name, phone, req.params.id]
-			);
-			res.json(rows[0]);
-		} catch (error) {
-			res
-				.status(500)
-				.json({ msg: "O'qituvchilarni yangilashda xatolik yuz berdi", error });
-		}
-	}
-	async deleteTeacher(req, res) {
-		if (!req.params.id) {
-			res.status(401).send({ error: "ID kiriting" });
-		}
-		try {
-			await pool.query("DELETE FROM teachers WHERE id = $1;", [req.params.id]);
-			res.json({ message: "Teacher deleted successfully" });
-		} catch (error) {
-			res
-				.status(500)
-				.json({ msg: "O'qituvchini o'chirishda xatolik yuz berdi", error });
-		}
+export async function getAllTeachers(req, res) {
+	try {
+		const teachers = await teacherRepo.getAll();
+		sendSuccess(res, teachers, "O'qituvchilar muvaffaqiyatli olindi", 200);
+	} catch (error) {
+		sendError(res, "O'qituvchilarni olishda xatolik yuz berdi", 500, error);
 	}
 }
-export default new Teachers_Controller();
+export async function createTeacher(req, res) {
+	const { full_name, phone } = req.body;
+	if (!full_name || !phone) {
+		return sendError(res, "To'liq ma'lumot kiriting", 400);
+	}
+	try {
+		const newTeacher = await teacherRepo.create({ full_name, phone });
+		sendSuccess(res, newTeacher, "O'qituvchi muvaffaqiyatli qo'shildi", 201);
+	} catch (error) {
+		sendError(res, "O'qituvchilarni qo'shishda xatolik yuz berdi", 500, error);
+	}
+}
+export async function getTeacherById(req, res) {
+	if (!req.params.id) {
+		return sendError(res, "ID kiriting", 401);
+	}
+	try {
+		const teacher = await teacherRepo.getById(req.params.id);
+		sendSuccess(res, teacher, "O'qituvchi muvaffaqiyatli olindi", 200);
+	} catch (error) {
+		sendError(res, "O'qituvchini olishda xatolik yuz berdi", 500, error);
+	}
+}
+export async function updateTeacher(req, res) {
+	if (!req.params.id) return sendError(res, "ID kiriting", 401);
+	const { full_name, phone } = req.body;
+	if (!full_name || !phone)
+		return sendError(res, "To'liq ma'lumot kiriting", 400);
+	try {
+		await teacherRepo.update(req.params.id, { full_name, phone });
+		sendSuccess(res, null, "O'qituvchi muvaffaqiyatli yangilandi", 200);
+	} catch (error) {
+		sendError(res, "O'qituvchilarni yangilashda xatolik yuz berdi", 500, error);
+	}
+}
+export async function deleteTeacher(req, res) {
+	if (!req.params.id) return sendError(res, "ID kiriting", 401);
+	try {
+		await teacherRepo.deleteById(req.params.id);
+		sendSuccess(res, null, "O'qituvchi muvaffaqiyatli o'chirildi", 200);
+	} catch (error) {
+		sendError(res, "O'qituvchini o'chirishda xatolik yuz berdi", 500, error);
+	}
+}

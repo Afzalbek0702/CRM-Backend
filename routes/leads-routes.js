@@ -1,5 +1,5 @@
 import { Router } from "express";
-import LeadsController from "../controller/leads-controller.js";
+import * as LeadsController from "../controller/leads-controller.js";
 const router = Router();
 
 router.post("/", LeadsController.createLead);
