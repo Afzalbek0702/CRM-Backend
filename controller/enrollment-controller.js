@@ -3,7 +3,7 @@ import { create, get } from "../repositories/enrollmentRepo.js";
 
 export async function getAllEnrollments(req, res) {
 	try {
-		const data = get();
+		const data = await get();
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(res, "Enrollmentsni olishda xatolik yuz berdi", 500, error);
@@ -15,7 +15,7 @@ export async function createEnrollment(req, res) {
 		return sendError(res, "student_id va group_id majburiy");
 
 	try {
-		const data = create(student_id, group_id);
+		const data = await create(student_id, group_id);
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(res, "Enrollment qo'shishda xatolik yuz berdi", 500, error);

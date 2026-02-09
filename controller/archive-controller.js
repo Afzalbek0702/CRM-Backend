@@ -3,7 +3,7 @@ import { sendError, sendSuccess } from "../lib/response.js";
 
 export async function getAllArchivedPayments(req, res) {
 	try {
-		const data = archiveRepo.getPayments();
+		const data = await archiveRepo.getPayments();
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(
@@ -16,7 +16,7 @@ export async function getAllArchivedPayments(req, res) {
 }
 export async function getAllArchivedLeads(req, res) {
 	try {
-		const data = archiveRepo.getLeads();
+		const data = await archiveRepo.getLeads();
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(
@@ -29,7 +29,7 @@ export async function getAllArchivedLeads(req, res) {
 }
 export async function getAllArchivedGroups(req, res) {
 	try {
-		const data = archiveRepo.getGroups();
+		const data = await archiveRepo.getGroups();
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(
@@ -44,7 +44,7 @@ export async function getArchivedGroupById(req, res) {
 	const { id } = req.params;
 	if (!id) return sendError(res, "Id not found!", 404);
 	try {
-		const data = archiveRepo.getGroupById(id);
+		const data = await archiveRepo.getGroupById(id);
 		if (data.length === 0)
 			return sendError(res, "Arxivlangan guruh topilmadi", 404);
 		sendSuccess(res, data);
@@ -56,7 +56,7 @@ export async function getArchivedGroupById(req, res) {
 }
 export async function getAllArchivedGroupsStudents(req, res) {
 	try {
-		const data = archiveRepo.getGroupsStudents();
+		const data = await archiveRepo.getGroupsStudents();
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(
@@ -69,7 +69,7 @@ export async function getAllArchivedGroupsStudents(req, res) {
 }
 export async function getAllArchivedStudents(req, res) {
 	try {
-		const data = archiveRepo.getStudents();
+		const data = await archiveRepo.getStudents();
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(

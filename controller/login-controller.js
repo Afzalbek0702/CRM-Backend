@@ -41,7 +41,7 @@ export async function register(req, res) {
 
 	const hash = await bcrypt.hash(password, 10);
 
-	const user = loginRepo.create({ username, phone, hash, role });
+	const user = await loginRepo.create({ username, phone, hash, role });
 
 	sendSuccess(res, user);
 }

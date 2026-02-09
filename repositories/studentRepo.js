@@ -40,7 +40,7 @@ LEFT JOIN current_month_payments cmp ON cmp.student_id = s.id
 WHERE s.status != 'DELETED'
 ORDER BY s.full_name;`,
 	);
-	return rows[0] || [];
+	return rows || [];
 }
 async function getById(id) {
 	const { rows } = await pool.query("SELECT * FROM students WHERE id = $1;", [

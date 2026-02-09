@@ -12,7 +12,7 @@ async function getAll() {
 	const { rows } = await pool.query(
 		`SELECT * FROM leads WHERE status != 'CONVERTED' ORDER BY created_at DESC;`,
 	);
-	return rows[0];
+	return rows;
 }
 async function convert(leadId, group_id) {
 	await pool.query("BEGIN");

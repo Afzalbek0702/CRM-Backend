@@ -8,7 +8,7 @@ export async function setAttendance(req, res) {
 		sendError(res, "Barcha maydonlar to'ldirilishi kerak", 400);
 
 	try {
-		const data = attendanceRepo.set({
+		const data = await attendanceRepo.set({
 			group_id,
 			student_id,
 			lesson_date,
@@ -32,9 +32,9 @@ export async function getAttendance(req, res) {
 
 	try {
 		// Guruhdagi dars kunlarini olish
-		const { groupResult } = attendanceRepo.group(group_id);
+		const groupResult = await attendanceRepo.group(group_id);
 
-		if (groupResult.rows.length === 0)
+		if (groupResult?.rows?.length === 0)
 			return sendError(res, "Guruh topilmadi", 404);
 		const lessonDays = groupResult.rows[0].lesson_days; // [1,2,3] yoki ["Tue", "Thu"]
 
@@ -58,7 +58,7 @@ export async function getAttendance(req, res) {
 
 		// Guruhdagi o'quvchilarni olish
 
-		const { studentsResult } = attendanceRepo.student(group_id);
+		const studentsResult = await attendanceRepo.student(group_id);
 
 		const attendanceData = [];
 
@@ -88,12 +88,11 @@ export async function getAttendance(req, res) {
 				// );
 
 				// Davomatni olish (to'g'ri ustun nomi ishlatilishi kerak)
-				const attendanceQuery = `SELECT status FROM attendance WHERE student_id = $1 AND group_id = $2 AND lesson_date = $3`;
-				const attendanceResult = await pool.query(attendanceQuery, [
+				const attendanceResult = await attendanceRepo.attendance(
 					student.id,
 					group_id,
 					dateStr,
-				]);
+				);
 
 				if (isLessonDay) {
 					days.push({
