@@ -49,9 +49,10 @@ export async function getArchivedGroupById(req, res) {
 			return sendError(res, "Arxivlangan guruh topilmadi", 404);
 		sendSuccess(res, data);
 	} catch (error) {
-		res
-			.status(500)
-			.json({ msg: "Arxivlangan guruhni olishda xatolik yuz berdi", error });
+		res.status(500).json({
+			message: "Arxivlangan guruhni olishda xatolik yuz berdi",
+			error,
+		});
 	}
 }
 export async function getAllArchivedGroupsStudents(req, res) {
@@ -75,6 +76,19 @@ export async function getAllArchivedStudents(req, res) {
 		sendError(
 			res,
 			"Arxivlangan o'quvchilarni olishda xatolik yuz berdi",
+			500,
+			error,
+		);
+	}
+}
+export async function getAllArchivedTeachers(req, res) {
+	try {
+		const data = await archiveRepo.getTeachers();
+		sendSuccess(res, data);
+	} catch (error) {
+		sendError(
+			res,
+			"Arxivlangan o'qituvchilarni olishda xatolik yuz berdi",
 			500,
 			error,
 		);

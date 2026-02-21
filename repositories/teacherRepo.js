@@ -27,7 +27,7 @@ async function update(id, data) {
    return rows[0];
 }
 async function deleteById(id) {
-   await pool.query("DELETE FROM teachers WHERE id = $1;", [id]);
+   await pool.query("UPDATE teachers SET status = 'DELETED' WHERE id = $1;", [id]);
    return 
 }
 

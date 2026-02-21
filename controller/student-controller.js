@@ -5,7 +5,7 @@ import { sendSuccess, sendError } from "../lib/response.js";
 export async function getAllStudents(req, res) {
 	try {
 		const rows = await studentRepo.getAll();
-		sendSuccess(res, rows, "O'quvchi topildi", 200);
+		sendSuccess(res, rows);
 	} catch (error) {
 		sendError(res, "O'quvchilarni olishda xatolik yuz berdi", 500, error);
 	}
@@ -19,11 +19,11 @@ export async function getSingleStudent(req, res) {
 		if (!student) {
 			return sendError(res, "O'quvchi topilmadi", 404);
 		}
-		sendSuccess(res, student, "O'quvchi topildi", 200);
+		sendSuccess(res, student);
 	} catch (error) {
 		res
 			.status(500)
-			.json({ msg: "O'quvchini olishda xatolik yuz berdi", error });
+			.json({ message: "O'quvchini olishda xatolik yuz berdi", error });
 	}
 }
 export async function createStudent(req, res) {
@@ -43,7 +43,7 @@ export async function createStudent(req, res) {
 			parents_name,
 			parents_phone,
 		});
-		sendSuccess(res, newStudent, "O'quvchi muvaffaqiyatli qo'shildi", 201);
+		sendSuccess(res, newStudent, 201);
 	} catch (error) {
 		sendError(res, "O'quvchini qo'shishda xatolik yuz berdi", 500, error);
 	}
@@ -70,7 +70,7 @@ export async function updateStudent(req, res) {
 		if (!updatedStudent) {
 			return sendError(res, "O'quvchi topilmadi", 404);
 		}
-		sendSuccess(res, updatedStudent, "O'quvchi muvaffaqiyatli yangilandi", 200);
+		sendSuccess(res, updatedStudent);
 	} catch (error) {
 		sendError(res, "O'quvchini yangilashda xatolik yuz berdi", 500, error);
 	}
@@ -87,7 +87,7 @@ export async function updateStudentStatus(req, res) {
 	}
 	try {
 		await studentRepo.updateStatus(req.params.id, status.toUpperCase());
-		sendSuccess(res, null, "O'quvchi statusi muvaffaqiyatli yangilandi", 200);
+		sendSuccess(res, { message: "O'quvchi statusi muvaffaqiyatli yangilandi" });
 	} catch (error) {
 		sendError(res, "O'quvchini yangilashda xatolik yuz berdi", 500, error);
 	}
@@ -98,7 +98,7 @@ export async function deleteStudent(req, res) {
 	}
 	try {
 		await studentRepo.softDelete(req.params.id);
-		sendSuccess(res, null, "O'quvchi muvaffaqiyatli o'chirildi", 200);
+		sendSuccess(res, { message: "O'quvchi muvaffaqiyatli o'chirildi" });
 	} catch (error) {
 		sendError(res, "O'quvchini o'chirishda xatolik yuz berdi", 500, error);
 	}
@@ -113,7 +113,7 @@ export async function getStudentProfile(req, res) {
 		if (!profile) {
 			return sendError(res, "O'quvchi topilmadi", 404);
 		}
-		sendSuccess(res, profile, "O'quvchi profili topildi", 200);
+		sendSuccess(res, profile);
 	} catch (error) {
 		sendError(res, "O'quvchi profilini olishda xatolik yuz berdi", 500, error);
 	}
@@ -134,7 +134,7 @@ export async function transferStudent(req, res) {
 			from_group_id,
 			to_group_id,
 		});
-		sendSuccess(res, null, "O'quvchi muvaffaqiyatli ko'chirildi", 200);
+		sendSuccess(res, { message: "O'quvchi muvaffaqiyatli ko'chirildi" });
 	} catch (error) {
 		await pool.query("ROLLBACK");
 		sendError(res, "O'quvchini ko'chirishda xatolik yuz berdi", 500, error);
@@ -153,7 +153,9 @@ export async function removeStudentFromGroup(req, res) {
 	}
 	try {
 		await studentRepo.removeStudentFromGroup(studentId, groupId);
-		sendSuccess(res, null, "O'quvchi muvaffaqiyatli guruhdan o'chirildi", 200);
+		sendSuccess(res, {
+			message: "O'quvchi muvaffaqiyatli guruhdan o'chirildi",
+		});
 	} catch (err) {
 		await pool.query("ROLLBACK");
 		sendError(

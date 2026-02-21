@@ -1,4 +1,3 @@
-import pool from "../lib/db.js";
 import attendanceRepo from "../repositories/attendanceRepo.js";
 import { sendError, sendSuccess } from "../lib/response.js";
 

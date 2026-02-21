@@ -4,7 +4,7 @@ import { sendSuccess, sendError } from "../lib/response.js";
 export async function getAllPayments(req, res) {
 	try {
 		const payments = await paymentRepo.getAll();
-		sendSuccess(res, payments, "Payments muvaffaqiyatli olindi", 200);
+		sendSuccess(res, payments);
 	} catch (error) {
 		sendError(res, "Paymentsni olishda xatolik yuz berdi", 500, error);
 	}
@@ -22,7 +22,7 @@ export async function createPayment(req, res) {
 			method,
 			paid_month,
 		});
-		sendSuccess(res, newPayment, "Payment muvaffaqiyatli yaratildi", 201);
+		sendSuccess(res, newPayment);
 	} catch (error) {
 		sendError(res, "Payment yaratishda xatolik yuz berdi", 500, error);
 	}
@@ -35,7 +35,7 @@ export async function getPaymentById(req, res) {
 		if (!payment) {
 			return sendError(res, "Payment topilmadi", 404);
 		}
-		sendSuccess(res, payment, "Payment muvaffaqiyatli olindi", 200);
+		sendSuccess(res, payment);
 	} catch (error) {
 		sendError(res, "To'lovni olishda xatolik yuz berdi", 500, error);
 	}
@@ -55,7 +55,7 @@ export async function updatePayment(req, res) {
 			type,
 			paid_month,
 		});
-		sendSuccess(res, updatedPayment, "Payment muvaffaqiyatli yangilandi", 200);
+		sendSuccess(res, updatedPayment);
 	} catch (error) {
 		sendError(res, "Paymentni yangilashda xatolik yuz berdi", 500, error);
 	}
@@ -65,7 +65,7 @@ export async function deletePayment(req, res) {
 		return sendError(res, "ID maydoni to'ldirilishi kerak", 400);
 	try {
 		await paymentRepo.deleteById(req.params.id);
-		sendSuccess(res, null, "Payment muvaffaqiyatli o'chirildi", 200);
+		sendSuccess(res, { message: "Payment muvaffaqiyatli o'chirildi" });
 	} catch (error) {
 		sendError(res, "To'lovni o'chirishda xatolik yuz berdi", 500, error);
 	}

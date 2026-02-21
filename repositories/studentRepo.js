@@ -139,7 +139,7 @@ async function transferStudent(data) {
 		[student_id, to_group_id],
 	);
 	await pool.query("COMMIT");
-	return { msg: "Student muvaffaqiyatli transfer qilindi" };
+	return { message: "Student muvaffaqiyatli transfer qilindi" };
 }
 async function removeStudentFromGroup(studentId, groupId) {
 	await pool.query("BEGIN");
@@ -150,12 +150,12 @@ async function removeStudentFromGroup(studentId, groupId) {
 	);
 
 	if (result.rowCount === 0) {
-		return { msg: "Active enrollment not found" };
+		return { message: "Active enrollment not found" };
 	}
 
 	await pool.query("COMMIT");
 	return {
-		msg: "Student muvaffaqiyatli guruhdan o'chirildi",
+		message: "Student muvaffaqiyatli guruhdan o'chirildi",
 		enrollment: result.rows[0],
 	};
 }

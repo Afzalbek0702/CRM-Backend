@@ -5,21 +5,29 @@ import teachersRouter from "./teachers-routes.js";
 import enrollmentsRoutes from "./enrollment-routes.js";
 import paymentsRoutes from "./payments-routes.js";
 import attendanceRoutes from "./attendance-routes.js";
-import userRoutes from "./user-routes.js";
+import workerRoutes from "./worker-routes.js";
 import dashboardRoutes from "./dashboard-routes.js";
 import leadsRoutes from "./leads-routes.js";
 import archiveRoutes from "./archive-routes.js";
+import roomRoutes from "./room-routes.js";
+import expenseRoutes from "./expenses-routes.js";
+import salaryRouters from "./salary-routes.js";
+import courseRouters from "./course-route.js";
 const router = Router();
 
 router.use("/groups", groupsRouter);
-router.use("/users", userRoutes);
 router.use("/students", studentsRouter);
 router.use("/teachers", teachersRouter);
 router.use("/enrollments", enrollmentsRoutes);
 router.use("/payments", paymentsRoutes);
 router.use("/attendance", attendanceRoutes);
 router.use("/dashboard", dashboardRoutes);
-router.use("/leads", leadsRoutes)
-router.use("/archive", archiveRoutes)
+router.use("/leads", leadsRoutes);
+router.use("/archive", archiveRoutes);
+router.use("/room", roomRoutes);
+router.use("/expense", expenseRoutes);
+router.use("/salary", salaryRouters);
+router.use("/course", courseRouters);
+router.use("/worker", workerRoutes);
 
 export default router;

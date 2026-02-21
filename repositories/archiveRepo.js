@@ -43,6 +43,12 @@ async function getStudents() {
 	);
 	return rows;
 }
+async function getTeachers() {
+	const { rows } = await pool.query(
+		`SELECT * FROM teachers WHERE status = 'DELETED'`,
+	);
+	return rows;
+}
 export default {
 	getGroupById,
 	getGroups,
@@ -50,4 +56,5 @@ export default {
 	getLeads,
 	getPayments,
 	getStudents,
+	getTeachers,
 };

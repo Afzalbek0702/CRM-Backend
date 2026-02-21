@@ -2,7 +2,7 @@ import pool from "../lib/db.js";
 
 async function MonthlyIncome(from, to) {
 	const { rows } = await pool.query(
-		`SELECT date_trunc('month', paid_at) AS month, SUM(amount) AS total_income FROM payments WHERE paid_at BETWEEN $1 AND $2 GROUP BY month ORDER BY month`,
+		`SELECT date_trunc('month', paid_at) AS month, SUM(amount) AS total_income FROM payments WHERE status = 'ACTIVE' AND paid_at BETWEEN $1 AND $2 GROUP BY month ORDER BY month`,
 		[
 			from,
 			to.slice(5, 10) == "02-31"

@@ -11,11 +11,18 @@ async function getById(id) {
 	return rows[0];
 }
 async function create(data) {
-	const { name, course_type, price, lesson_time, lesson_days, teacher_id } =
-		data;
+	const {
+		name,
+		course_type,
+		price,
+		lesson_time,
+		lesson_days,
+		teacher_id,
+		room_id,
+	} = data;
 	const { rows } = await pool.query(
-		`INSERT INTO groups (name, course_type, price, lesson_time, lesson_days, teacher_id) VALUES ($1, $2, $3, $4, $5, $6)RETURNING *;`,
-		[name, course_type, price, lesson_time, lesson_days, teacher_id],
+		`INSERT INTO groups (name, course_type, price, lesson_time, lesson_days, teacher_id, room_id) VALUES ($1, $2, $3, $4, $5, $6, $7)RETURNING *;`,
+		[name, course_type, price, lesson_time, lesson_days, teacher_id, room_id],
 	);
 	return rows[0];
 }
@@ -51,12 +58,21 @@ async function deleteById(id) {
 		enrollmentCount: enrollmentsResult.rowCount,
 	};
 }
+async function chekRoom(room_id, lesson_day, lesson_time) {
+	const { rows } = await pool.query(
+		`SELECT g.name AS group_name, g.lesson_time, g.lesson_days FROM groups g WHERE g.room_id = $1  -- Xona ID AND $2 = ANY(g.lesson_days)  -- Bugun (masalan, "Tue")  AND NOT (SPLIT_PART($3, ' - ', 1)::TIME >= SPLIT_PART(g.lesson_time, ' - ', 1)::TIME AND SPLIT_PART($3, ' - ', 2)::TIME <= SPLIT_PART(g.lesson_time, ' - ', 2)::TIME
+  );`,
+		[room_id, lesson_day, lesson_time],
+   );
+   return rows
+}
 
 export default {
-   getAll,
-   getById,
-   create,
-   getStudentInGroup,
-   update,
-   deleteById,
-}
+	getAll,
+	getById,
+	create,
+	getStudentInGroup,
+	update,
+	deleteById,
+	chekRoom,
+};

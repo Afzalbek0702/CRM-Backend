@@ -6,11 +6,26 @@ async function create(data) {
 		"INSERT INTO leads (full_name, phone, source, interested_course, comment) VALUES ($1, $2, $3, $4, $5)",
 		[full_name, phone, source, interested_course, comment],
 	);
-	return { msg: "Lead created successfully" };
+	return { message: "Lead created successfully" };
 }
 async function getAll() {
 	const { rows } = await pool.query(
 		`SELECT * FROM leads WHERE status != 'CONVERTED' ORDER BY created_at DESC;`,
+	);
+	return rows;
+}
+async function getById(id) {
+	const { rows } = await pool.query(
+		`SELECT * FROM leads WHERE AND id = $1;`,
+		[id],
+	);
+	return rows;
+}
+async function update(data) {
+	const { full_name, phone, id } = data;
+	const { rows } = await pool.query(
+		`UPDATE leads SET fullname = $1, phone = $2 WHERE id = $3;`,
+		[, full_name, phone, id],
 	);
 	return rows;
 }
@@ -48,8 +63,10 @@ async function deleteById(id) {
 }
 
 export default {
-   create,
-   getAll,
-   convert,
-   deleteById,
-}
+	create,
+	getAll,
+   getById,
+   update,
+	convert,
+	deleteById,
+};
