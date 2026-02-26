@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="uz">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Backend Status</title>
+		<style>
+			/* RESET & ASOSIY SOZLAMALAR */
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family:
+					-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+					"Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+					sans-serif;
+				background-color: #282c34; /* React default qora-ko'k fon */
+				color: white;
+				height: 100vh;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				text-align: center;
+			}
+
+			/* ASOSIY KONTEYNER */
+			.container {
+				background-color: #3b404e;
+				padding: 40px;
+				border-radius: 20px;
+				box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+				max-width: 500px;
+				width: 90%;
+				animation: fadeIn 1s ease-in-out;
+			}
+
+			/* LOGO YOKI ICON O'RNI */
+			.logo-placeholder {
+				width: 100px;
+				height: 100px;
+				background: linear-gradient(135deg, #61dafb, #21a1f1);
+				border-radius: 50%;
+				margin: 0 auto 20px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 40px;
+				font-weight: bold;
+				color: #282c34;
+				box-shadow: 0 0 20px rgba(97, 218, 251, 0.6);
+				animation: spin 10s linear infinite;
+			}
+
+			/* SARLAVHA */
+			h1 {
+				font-size: 2.5rem;
+				margin-bottom: 10px;
+				background: -webkit-linear-gradient(#61dafb, #21a1f1);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+			}
+
+			p.subtitle {
+				color: #abb2bf;
+				margin-bottom: 30px;
+				font-size: 1.1rem;
+			}
+
+			/* BACKEND MA'LUMOTLARI QUTISI */
+			.api-response {
+				background-color: #21252b;
+				border: 1px solid #4b5263;
+				border-radius: 8px;
+				padding: 20px;
+				text-align: left;
+				font-family: "Courier New", Courier, monospace;
+				font-size: 0.9rem;
+				color: #98c379; /* Yashil kod rangi */
+				position: relative;
+			}
+
+			.api-response::before {
+				content: "Backend Javobi:";
+				position: absolute;
+				top: -10px;
+				left: 20px;
+				background-color: #3b404e;
+				padding: 0 10px;
+				color: #abb2bf;
+				font-size: 0.8rem;
+				font-family: sans-serif;
+			}
+
+			/* STATUS INDICATOR (Yashil nuqta) */
+			.status-badge {
+				display: inline-flex;
+				align-items: center;
+				margin-top: 20px;
+				padding: 8px 16px;
+				background-color: rgba(46, 204, 113, 0.1);
+				border: 1px solid #2ecc71;
+				border-radius: 50px;
+				color: #2ecc71;
+				font-weight: 600;
+				font-size: 0.9rem;
+			}
+
+			.status-dot {
+				width: 10px;
+				height: 10px;
+				background-color: #2ecc71;
+				border-radius: 50%;
+				margin-right: 8px;
+				box-shadow: 0 0 10px #2ecc71;
+				animation: pulse 2s infinite;
+			}
+
+			/* ANIMATSIYALAR */
+			@keyframes spin {
+				from {
+					transform: rotate(0deg);
+				}
+				to {
+					transform: rotate(360deg);
+				}
+			}
+
+			@keyframes pulse {
+				0% {
+					opacity: 1;
+					transform: scale(1);
+				}
+				50% {
+					opacity: 0.5;
+					transform: scale(1.2);
+				}
+				100% {
+					opacity: 1;
+					transform: scale(1);
+				}
+			}
+
+			@keyframes fadeIn {
+				from {
+					opacity: 0;
+					transform: translateY(20px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			/* LINK USLUBI (React dagidek) */
+			a {
+				color: #61dafb;
+				text-decoration: none;
+				margin-top: 20px;
+				display: inline-block;
+				font-size: 0.9rem;
+			}
+			a:hover {
+				text-decoration: underline;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<!-- Aylanuvchi Logo -->
+			<div class="logo-placeholder">API</div>
+
+			<!-- Sarlavha -->
+			<h1>Backend Ishlamoqda</h1>
+			<p class="subtitle">Serverga muvaffaqiyatli ulandi</p>
+
+			<div class="api-response">
+				{<br />
+				&nbsp;&nbsp;"status": "success",<br />
+				&nbsp;&nbsp;"message": "Hello from Backend!",<br />
+				&nbsp;&nbsp;"timestamp": "2023-10-27 14:30:00",<br />
+				&nbsp;&nbsp;"version": "1.0.0"<br />
+				}
+			</div>
+
+			<!-- Status Badge -->
+			<div class="status-badge">
+				<div class="status-dot"></div>
+				Tizim Online
+			</div>
+
+			<br />
+		</div>
+	</body>
+</html>

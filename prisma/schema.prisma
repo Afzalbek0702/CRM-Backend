@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model attendance {
+  id          Int       @id @default(autoincrement())
+  group_id    Int?
+  student_id  Int?
+  lesson_date DateTime  @db.Date
+  status      Boolean
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  groups      groups?   @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  students    students? @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([group_id, student_id, lesson_date])
+}
+
+model courses {
+  id           Int       @id @default(autoincrement())
+  name         String
+  price        Int
+  lesson_count Int?
+  status       String?   @default("ACTIVE") @db.VarChar(20)
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model enrollments {
+  id          Int       @id @default(autoincrement())
+  student_id  Int?
+  group_id    Int?
+  joined_at   DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  status      String?   @default("ACTIVE") @db.VarChar(20)
+  end_date    DateTime? @db.Date
+  archived_at DateTime? @db.Timestamp(6)
+  groups      groups?   @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  students    students? @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model expenses {
+  id           Int       @id @default(autoincrement())
+  amount       Decimal   @db.Decimal(12, 2)
+  description  String?
+  method       String?   @db.VarChar(10)
+  expense_date DateTime  @default(dbgenerated("CURRENT_DATE")) @db.Date
+  created_by   Int?
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  status       String?   @default("active") @db.VarChar(20)
+  users        users?    @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model groups {
+  id          Int           @id @default(autoincrement())
+  name        String        @db.VarChar(100)
+  course_type String?       @db.VarChar(100)
+  price       Int
+  lesson_time String?       @db.VarChar(50)
+  lesson_days String[]
+  teacher_id  Int?
+  status      String?       @default("ACTIVE") @db.VarChar(20)
+  created_at  DateTime?     @default(now()) @db.Timestamp(6)
+  room_id     Int?
+  attendance  attendance[]
+  enrollments enrollments[]
+  rooms       rooms?        @relation(fields: [room_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  teachers    teachers?     @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  payments    payments[]
+}
+
+model leads {
+  id                Int       @id @default(autoincrement())
+  full_name         String
+  phone             String
+  source            String?
+  interested_course String?
+  status            String?   @default("NEW")
+  comment           String?
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @db.Timestamp(6)
+}
+
+model payments {
+  id         Int       @id @default(autoincrement())
+  student_id Int?
+  group_id   Int?
+  amount     Int
+  paid_at    DateTime? @default(now()) @db.Timestamp(6)
+  method     String?   @db.VarChar(10)
+  paid_month DateTime? @db.Date
+  status     String?   @default("ACTIVE") @db.VarChar(20)
+  deleted_at DateTime? @db.Timestamp(6)
+  groups     groups?   @relation(fields: [group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  students   students? @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model rooms {
+  id       Int      @id @default(autoincrement())
+  name     String
+  capacity Int?
+  status   String?  @default("ACTIVE")
+  groups   groups[]
+}
+
+model salary {
+  id          Int       @id @default(autoincrement())
+  full_name   String
+  amount      Decimal   @db.Decimal(12, 2)
+  method      String?   @db.VarChar(10)
+  description String?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  status      String?   @default("ACTIVE") @db.VarChar(20)
+}
+
+model students {
+  id            Int           @id @default(autoincrement())
+  full_name     String        @db.VarChar(255)
+  phone         String?       @db.VarChar(20)
+  status        String?       @default("ACTIVE") @db.VarChar(20)
+  created_at    DateTime?     @default(now()) @db.Timestamp(6)
+  birthday      DateTime?     @db.Date
+  parents_name  String?       @db.VarChar(50)
+  deleted_at    DateTime?     @db.Timestamp(6)
+  parents_phone String?       @db.VarChar(20)
+  attendance    attendance[]
+  enrollments   enrollments[]
+  payments      payments[]
+}
+
+model teachers {
+  id         Int       @id @default(autoincrement())
+  full_name  String    @db.VarChar(255)
+  phone      String?   @db.VarChar(20)
+  created_at DateTime? @default(now()) @map(" created_at") @db.Timestamp(6)
+  status     String?   @default("ACTIVE") @db.VarChar(10)
+  groups     groups[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  id            Int        @id @default(autoincrement())
+  username      String?
+  phone         String     @unique
+  password_hash String
+  role          String
+  created_at    DateTime?  @default(now()) @db.Timestamp(6)
+  status        String?    @default("ACTIVE") @db.VarChar(10)
+  expenses      expenses[]
+  workers       workers?
+}
+
+model workers {
+  id          Int       @id @default(autoincrement())
+  user_id     Int?      @unique
+  full_name   String    @db.VarChar(100)
+  phone       String?   @db.VarChar(20)
+  position    String    @db.VarChar(30)
+  salary      Decimal?  @db.Decimal(10, 2)
+  birthday    DateTime? @db.Date
+  img         String?
+  status      String?   @default("ACTIVE") @db.VarChar(20)
+  hired_at    DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  archived_at DateTime? @db.Timestamp(6)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  users       users?    @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_worker_user")
+}
