@@ -21,26 +21,17 @@ async function get() {
 		},
 	});
 
-
 	return rooms.flatMap((r) => {
-		if (r.groups.length === 0) {
-			return [
-            {
-               room_id: r.id,
-					room_name: r.name,
-					capacity: r.capacity,
-					status: r.status,
-					group_name: null,
-				},
-			];
-		}
-		return r.groups.map((g) => ({
+		const groupsToProcess = r.groups.length > 0 ? r.groups : [null];
+		return groupsToProcess.map((g) => ({
+			room_id: r.id,
 			room_name: r.name,
 			capacity: r.capacity,
 			status: r.status,
-			group_name: g.name,
-			lesson_time: g.lesson_time,
-			lesson_days: g.lesson_days,
+			group_name: g?.name ?? null,
+			group_id: g?.id ?? null,
+			group_lesson_time: g?.lesson_time ?? null,
+			group_lesson_days: g?.lesson_days ?? null,
 		}));
 	});
 }
@@ -63,17 +54,14 @@ async function getById(id) {
 	if (!r) return [];
 
 	// Agar guruhlar bo'lmasa, faqat xonani qaytaramiz
-	if (r.groups.length === 0) {
-		return [
-         {
-            room_id: r.id,
-				room_name: r.name,
-				capacity: r.capacity,
-				status: r.status,
-				group_name: null,
-			},
-		];
-	}
+	if (r.groups.length === 0)
+		return {
+			room_id: r.id,
+			room_name: r.name,
+			capacity: r.capacity,
+			status: r.status,
+			group_name: null,
+		};
 
 	return r.groups.map((g) => ({
 		room_name: r.name,

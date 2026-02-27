@@ -7,7 +7,6 @@ async function get() {
 }
 
 async function create(data) {
-	// Prisma obyekt ichidagi kerakli maydonlarni o'zi ajratib oladi
 	return await prisma.salary.create({
 		data: {
 			full_name: data.full_name,
@@ -19,7 +18,6 @@ async function create(data) {
 }
 
 async function update(data) {
-	// UPDATE salary SET ... WHERE id = $5
 	return await prisma.salary.update({
 		where: { id: parseInt(data.id) },
 		data: {

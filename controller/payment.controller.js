@@ -36,12 +36,14 @@ export async function getPaymentById(req, res) {
 		return sendError(res, "ID topilmadi", 400);
 	try {
 		const payment = await paymentService.getById(req.params.id);
-		if (!payment) {
-			return sendError(res, "Payment topilmadi", 404);
-		}
 		sendSuccess(res, payment);
 	} catch (error) {
-		sendError(res, "To'lovni olishda xatolik yuz berdi", 500, error);
+		sendError(
+			res,
+			error.message || "To'lovni olishda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }
 export async function updatePayment(req, res) {

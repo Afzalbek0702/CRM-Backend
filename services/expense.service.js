@@ -2,7 +2,6 @@ import prisma from "../lib/prisma.js";
 
 async function create(data) {
 	const { description, amount, method, created_by } = data;
-	// create metodi avtomatik ravishda yangi obyektni qaytaradi
 	return await prisma.expenses.create({
 		data: {
 			description,
@@ -14,9 +13,9 @@ async function create(data) {
 }
 
 async function getAll() {
-	// Faqat statusi 'DELETED' bo'lgan xarajatlarni olish
 	return await prisma.expenses.findMany({
-		where: { status: "DELETED" },
+		where: { status: "ACTIVE" },
+		where: { status: "active" },
 		orderBy: { created_at: "desc" },
 	});
 }
@@ -35,7 +34,6 @@ async function update(data) {
 }
 
 async function deleteByid(id) {
-	// Soft delete: statusni 'DELETED' ga o'zgartirish
 	return await prisma.expenses.update({
 		where: { id: parseInt(id) },
 		data: { status: "DELETED" },

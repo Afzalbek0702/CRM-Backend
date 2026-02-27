@@ -33,9 +33,7 @@ async function update(data) {
 }
 
 async function convert(leadId, group_id) {
-	// Tranzaksiya boshlanishi
 	return await prisma.$transaction(async (tx) => {
-		// 1. Lead ma'lumotlarini olish
 		const lead = await tx.leads.findUnique({
 			where: { id: parseInt(leadId) },
 		});
@@ -44,7 +42,6 @@ async function convert(leadId, group_id) {
 			throw new Error("Lead not found");
 		}
 
-		// 2. Lead ma'lumotlaridan yangi Student yaratish
 		const student = await tx.students.create({
 			data: {
 				full_name: lead.full_name,
@@ -53,7 +50,6 @@ async function convert(leadId, group_id) {
 			},
 		});
 
-		// 3. Studentni Enrollment (guruh)ga qo'shish
 		await tx.enrollments.create({
 			data: {
 				student_id: student.id,
@@ -63,7 +59,6 @@ async function convert(leadId, group_id) {
 			},
 		});
 
-		// 4. Lead statusini o'zgartirish
 		await tx.leads.update({
 			where: { id: parseInt(leadId) },
 			data: {

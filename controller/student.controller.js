@@ -6,7 +6,12 @@ export async function getAllStudents(req, res) {
 		const rows = await studentService.getAll();
 		sendSuccess(res, rows);
 	} catch (error) {
-		sendError(res, "O'quvchilarni olishda xatolik yuz berdi", 500, error);
+		sendError(
+			res,
+			error.message || "O'quvchilarni olishda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }
 export async function getSingleStudent(req, res) {
@@ -15,28 +20,25 @@ export async function getSingleStudent(req, res) {
 	}
 	try {
 		const student = await studentService.getById(req.params.id);
-		if (!student) {
-			return sendError(res, "O'quvchi topilmadi", 404);
-		}
 		sendSuccess(res, student);
 	} catch (error) {
 		sendError(
 			res,
-			{ message: "O'quvchini olishda xatolik yuz berdi" },
-			500,
+			error.message || "O'quvchini olishda xatolik yuz berdi",
+			error.statusCode || 500,
 			error,
 		);
 	}
 }
 export async function createStudent(req, res) {
 	const { full_name, phone, birthday, parents_name, parents_phone } = req.body;
-	if (!full_name || !phone || birthday != null) {
+	if (!full_name || !phone || birthday != null)
 		return sendError(
 			res,
 			"Barcha maydonlar to'la bo'lishi shart! full_name, phone, birthday, parents_name, parents_phone",
 			400,
 		);
-	}
+
 	try {
 		const newStudent = await studentService.create({
 			full_name,
@@ -55,7 +57,7 @@ export async function updateStudent(req, res) {
 		return sendError(res, "ID kerak", 400);
 	}
 	const { full_name, phone, birthday, parents_name } = req.body;
-	if (!full_name || !phone || !birthday || !parents_name) {
+	if (!full_name || !phone || birthday != null) {
 		return sendError(
 			res,
 			"full_name, phone, birthday va parents_name kerak",
@@ -74,7 +76,12 @@ export async function updateStudent(req, res) {
 		}
 		sendSuccess(res, updatedStudent);
 	} catch (error) {
-		sendError(res, "O'quvchini yangilashda xatolik yuz berdi", 500, error);
+		sendError(
+			res,
+			error.message || "O'quvchini yangilashda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }
 export async function updateStudentStatus(req, res) {
@@ -82,11 +89,10 @@ export async function updateStudentStatus(req, res) {
 	if (!req.params.id || !status) {
 		return sendError(res, "ID va status kerak", 400);
 	}
-
-	const allowed = ["active", "frozen", "finished", "debtor"];
-	if (!allowed.includes(status)) {
-		return sendError(res, "Noto‘g‘ri status", 400);
-	}
+	// const allowed = ["active", "frozen", "finished", "debtor"];
+	// if (!allowed.includes(status)) {
+	// 	return sendError(res, "Noto‘g‘ri status", 400);
+	// }
 	try {
 		const student = await studentService.updateStatus(
 			req.params.id,
@@ -94,7 +100,12 @@ export async function updateStudentStatus(req, res) {
 		);
 		sendSuccess(res, student);
 	} catch (error) {
-		sendError(res, "O'quvchini yangilashda xatolik yuz berdi", 500, error);
+		sendError(
+			res,
+			error.message || "O'quvchini yangilashda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }
 export async function deleteStudent(req, res) {
@@ -105,7 +116,12 @@ export async function deleteStudent(req, res) {
 		const removeStudent = await studentService.softDelete(req.params.id);
 		sendSuccess(res, removeStudent);
 	} catch (error) {
-		sendError(res, "O'quvchini o'chirishda xatolik yuz berdi", 500, error);
+		sendError(
+			res,
+			error.message || "O'quvchini o'chirishda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }
 export async function getStudentProfile(req, res) {
@@ -118,7 +134,12 @@ export async function getStudentProfile(req, res) {
 		if (!profile) return sendError(res, "O'quvchi topilmadi", 404);
 		sendSuccess(res, profile);
 	} catch (error) {
-		sendError(res, "O'quvchi profilini olishda xatolik yuz berdi", 500, error);
+		sendError(
+			res,
+			error.message || "O'quvchi profilini olishda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }
 export async function transferStudent(req, res) {
@@ -139,7 +160,12 @@ export async function transferStudent(req, res) {
 		});
 		sendSuccess(res, data);
 	} catch (error) {
-		sendError(res, "O'quvchini ko'chirishda xatolik yuz berdi", 500, error);
+		sendError(
+			res,
+			error.message || "O'quvchini ko'chirishda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }
 export async function removeStudentFromGroup(req, res) {
@@ -159,12 +185,12 @@ export async function removeStudentFromGroup(req, res) {
 			groupId,
 		);
 		sendSuccess(res, data);
-	} catch (err) {
+	} catch (error) {
 		sendError(
 			res,
-			"O'quvchini guruhdan o'chirishda xatolik yuz berdi",
-			500,
-			err,
+			error.message || "O'quvchini guruhdan o'chirishda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
 		);
 	}
 }

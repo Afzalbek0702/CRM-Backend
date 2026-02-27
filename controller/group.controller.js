@@ -46,19 +46,26 @@ export async function createGroup(req, res) {
 		});
 		sendSuccess(res, newGroup, 201);
 	} catch (error) {
-		sendError(res, "Guruh yaratishda xatolik yuz berdi", 500, error);
+		sendError(
+			res,
+			error.message || "Guruh yaratishda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }
 export async function getSingleGroup(req, res) {
 	if (!req.params.id) return sendError(res, "Guruh ID si ko'rsatilmagan", 400);
 	try {
 		const group = await groupService.getById(req.params.id);
-		if (!group) {
-			return sendError(res, "Guruh topilmadi", 404);
-		}
 		sendSuccess(res, group);
 	} catch (error) {
-		sendError(res, "Guruhni olishda xatolik yuz berdi", 500, error);
+		sendError(
+			res,
+			error.message || "Guruhni olishda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }
 export async function getStudentsInGroup(req, res) {

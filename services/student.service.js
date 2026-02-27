@@ -69,7 +69,9 @@ async function getAll() {
 			parents_name: student.parents_name,
 			parents_phone: student.parents_phone,
 			deleted_at: student.deleted_at,
-			groups: enrollment ? { id: enrollment.groups.id, name: enrollment.groups.name } : null,
+			groups: enrollment
+				? { id: enrollment.groups.id, name: enrollment.groups.name }
+				: null,
 			monthly_paid: payment.monthly_paid,
 			last_monthly_payment: payment.last_monthly_payment,
 		};
@@ -78,11 +80,11 @@ async function getAll() {
 }
 async function getById(id) {
 	const student = await prisma.students.findUnique({
-		where: { id:  parseInt(id) },
+		where: { id: parseInt(id) },
 		include: {
 			enrollments: {
 				where: { status: "ACTIVE" },
-				orderBy: { joined_at: "desc" }, 
+				orderBy: { joined_at: "desc" },
 				take: 1,
 				include: {
 					groups: {
@@ -96,7 +98,7 @@ async function getById(id) {
 		},
 	});
 
-	if (!student) return null;
+	if (!student) throw { message: "O'quvchi topilmadi", statusCode: 404 };
 	const paymentAgg = await prisma.payments.aggregate({
 		where: {
 			student_id: parseInt(id),
@@ -128,12 +130,21 @@ async function getById(id) {
 		parents_name: student.parents_name,
 		parents_phone: student.parents_phone,
 		deleted_at: student.deleted_at,
-		group, 
+		group,
 		monthly_paid: Number(paymentAgg._sum.amount ?? 0),
 		last_monthly_payment: paymentAgg._max.paid_at,
 	};
 }
 async function create(data) {
+   const existing = await prisma.students.findFirst({
+      where: {
+         phone: data.phone,
+      }
+   })
+   if (!existing) {
+      throw { message: "Bu telefon raqam bilan o'quvchi allaqachon mavjud", statusCode: 400 };
+   }
+
 	return await prisma.students.create({
 		data: {
 			full_name: data.full_name,
@@ -201,8 +212,7 @@ async function getStudentProfile(id) {
 		},
 	});
 
-	if (!data) return null;
-	console.log(data);
+	if (!data) throw { message: "O'quvchi topilmadi", statusCode: 404 };
 
 	// Balans hisoblash (JS-da qilish bazaga SQL JOIN-lardan ko'ra kamroq yuk beradi)
 	const totalDebt = data.enrollments.reduce(
@@ -286,9 +296,7 @@ async function removeStudentFromGroup(studentId, groupId) {
 		},
 	});
 
-	if (result.count === 0) {
-		return { message: "Active enrollment not found" };
-	}
+	if (result.count === 0) throw { message: "O'quvchi bu guruhda topilmadi yoki allaqachon o'chirilgan", statusCode: 404 };
 
 	return { message: "Student muvaffaqiyatli guruhdan o'chirildi" };
 }

@@ -19,9 +19,11 @@ async function getAll() {
 }
 
 async function getById(id) {
-	return await prisma.groups.findUnique({
+	const group = await prisma.groups.findUnique({
 		where: { id: parseInt(id) },
 	});
+	if (!group) throw { message: "Guruh topilmadi", statusCode: 404 };
+	return group;
 }
 
 async function create(data) {
@@ -37,7 +39,7 @@ async function create(data) {
 	const newTime = parseLessonTime(lesson_time);
 	const existingGroups = await prisma.groups.findMany({
 		where: {
-			room_id: Number(room_id),
+			room_id: parseInt(room_id),
 			lesson_days: {
 				hasSome: lesson_days,
 			},
@@ -58,8 +60,11 @@ async function create(data) {
 			existingTime.end,
 		);
 
-		if (overlap) return `Xona band: "${group.name}" (${group.lesson_time}) bilan vaqt to‘qnashdi`
-		
+		if (overlap)
+			throw {
+				message: `Xona band: "${group.name}" (${group.lesson_time}) bilan vaqt to‘qnashdi`,
+				statusCode: 409,
+			};
 	}
 	return await prisma.groups.create({
 		data: {
@@ -116,7 +121,6 @@ async function update(id, data) {
 async function deleteById(id) {
 	const groupId = parseInt(id);
 
-	// Tranzaksiya orqali guruhni yopish va o'quvchilarni bitirtirish
 	return await prisma.$transaction(async (tx) => {
 		const group = await tx.groups.update({
 			where: { id: groupId },

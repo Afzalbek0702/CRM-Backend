@@ -19,7 +19,6 @@ export async function getDashboardData(req, res) {
 			todayLessons,
 			absentStudents,
       });
-      console.log(monthlyIncome);
       
 	} catch (error) {
 		sendError(res, "Server xatosi", 500, error);

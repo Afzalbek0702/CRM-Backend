@@ -1,6 +1,7 @@
 import path from "path";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import { fileURLToPath } from "url";
 import authRouter from "./routes/auth.routes.js";
 import apiRoutes from "./routes/api.routes.js";
@@ -13,12 +14,18 @@ const app = express();
 
 // Middleware
 const corsOption = {
-	// credentials: true,
+	origin: "http://localhost:5173", 
+	credentials: true,
+	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+	allowedHeaders: ["Content-Type", "Authorization"],
+	exposedHeaders: ["Set-Cookie"], 
 };
-
 app.use(express.json());
+app.use(cookieParser());
 app.use(cors(corsOption));
-app.use(cookieParser("helloworld"));
+app.use(helmet());
+
+
 // Routes
 app.use("/auth", authRouter);
 app.use("/api", authMiddleware, requireRole("admin", "manager"), apiRoutes);
@@ -28,8 +35,6 @@ const __dirname = path.dirname(__filename);
 
 // Root endpoint
 app.get("/", (req, res) => {
-	console.log(req.cookies);
-	res.cookie("tok", "token", { maxAge: 30000, signed: true });
 	res.sendFile(path.join(__dirname, "view", "index.html"));
 });
 

@@ -18,7 +18,12 @@ export async function createTeacher(req, res) {
 		const newTeacher = await teacherService.create({ full_name, phone });
 		sendSuccess(res, newTeacher, 201);
 	} catch (error) {
-		sendError(res, "O'qituvchilarni qo'shishda xatolik yuz berdi", 500, error);
+		sendError(
+			res,
+			error.message || "O'qituvchilarni qo'shishda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }
 export async function getTeacherById(req, res) {
@@ -29,7 +34,12 @@ export async function getTeacherById(req, res) {
 		const teacher = await teacherService.getById(req.params.id);
 		sendSuccess(res, teacher);
 	} catch (error) {
-		sendError(res, "O'qituvchini olishda xatolik yuz berdi", 500, error);
+		sendError(
+			res,
+			error.message || "O'qituvchini olishda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }
 export async function updateTeacher(req, res) {

@@ -10,7 +10,6 @@ export async function getAttendance(req, res) {
 		const [year, mon] = month.split("-").map(Number);
 		const startDate = `${month}-01`;
 		const endDate = `${month}-${new Date(year, mon, 0).getDate()}`;
-      console.log(startDate,endDate);
       
 		const [group, students, allAttendance] = await Promise.all([
 			attendanceService.getGroupDetails(group_id),

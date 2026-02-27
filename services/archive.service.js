@@ -32,7 +32,6 @@ async function getGroups() {
 }
 
 async function getGroupById(id) {
-	// findMany ishlatildi, chunki eski kod massiv qaytargan
 	return await prisma.groups.findMany({
 		where: {
 			id: parseInt(id),

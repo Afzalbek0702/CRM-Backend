@@ -1,4 +1,5 @@
 import prisma from "../lib/prisma.js";
+import { parseLessonTime } from "../utils/time.js";
 
 async function MonthlyIncome(from, to) {
 	const adjustedTo =
@@ -23,41 +24,61 @@ async function MonthlyIncome(from, to) {
 async function TopDebtors(month) {
 	const startOfMonth = new Date(month);
 	const endOfMonth = new Date(startOfMonth);
-	endOfMonth.setMonth(startOfMonth.getMonth() + 1);
+	endOfMonth.setMonth(endOfMonth.getMonth() + 1);
 
 	const students = await prisma.students.findMany({
 		where: { status: "ACTIVE" },
 		include: {
-			enrollments: { include: { groups: true } },
-			payments: { where: { paid_at: { gte: startOfMonth, lt: endOfMonth } } },
+			enrollments: {
+				where: { status: "ACTIVE" },
+				include: { groups: true },
+			},
+			payments: {
+				where: {
+					paid_at: {
+						gte: startOfMonth,
+						lt: endOfMonth,
+					},
+				},
+			},
 		},
 	});
 
 	const debts = students
 		.map((s) => {
 			const should_pay = s.enrollments.reduce(
-				(sum, e) => sum + Number(e.groups?.price ?? 0),
+				(sum, e) => sum + Number(e.groups?.price || 0),
 				0,
 			);
-			const paid = s.payments.reduce(
-				(sum, p) => sum + Number(p.amount ?? 0),
-				0,
-			);
-			const debt = should_pay - paid;
-			return debt > 0
-				? { student_id: s.id, full_name: s.full_name, should_pay, paid, debt }
-				: null;
-		})
-		.filter(Boolean);
 
-	return debts.sort((a, b) => b.debt - a.debt).slice(0, 10);
+			const paid = s.payments.reduce(
+				(sum, p) => sum + Number(p.amount || 0),
+				0,
+			);
+
+			const debt = should_pay - paid;
+
+			if (debt <= 0) return null;
+
+			return {
+				student_id: s.id,
+				full_name: s.full_name,
+				should_pay,
+				paid,
+				debt,
+			};
+		})
+		.filter(Boolean)
+		.sort((a, b) => b.debt - a.debt)
+		.slice(0, 10);
+
+	return debts;
 }
 
 async function TodayLessons() {
 	const todayDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
 		new Date().getDay()
 	];
-	const now = new Date();
 
 	const lessons = await prisma.groups.findMany({
 		where: { status: "ACTIVE", lesson_days: { has: todayDay } },
@@ -84,41 +105,72 @@ async function AbsentStudents() {
 		new Date().getDay()
 	];
 	const now = new Date();
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
-	// fetch all active groups today
+	const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
 	const groups = await prisma.groups.findMany({
-		where: { status: "ACTIVE", lesson_days: { has: todayDay } },
-		include: { enrollments: { include: { students: true } } },
+		where: {
+			status: "ACTIVE",
+			lesson_days: { has: todayDay },
+		},
+		include: {
+			enrollments: {
+				where: {
+					students: { status: "ACTIVE" },
+				},
+				include: { students: true },
+			},
+		},
 	});
 
+	const attendanceRecords = await prisma.attendance.findMany({
+		where: {
+			lesson_date: { gte: today, lt: tomorrow },
+		},
+	});
+
+	const attMap = new Map(
+		attendanceRecords.map((att) => [`${att.group_id}-${att.student_id}`, att]),
+	);
+
 	const absent = [];
+	const seenStudents = new Set(); 
 
 	for (const g of groups) {
-		for (const e of g.enrollments) {
-			// fetch attendance for this student/group today
-			const att = await prisma.attendance.findFirst({
-				where: {
-					group_id: g.id,
-					student_id: e.students.id,
-					lesson_date: new Date(),
-				},
-			});
+		try {
+		
+			const { start: lessonStartMinutes } = parseLessonTime(g.lesson_time);
 
-			const lessonTime = g.lesson_time?.split(" - ")[0] ?? "00:00";
 
-			if (
-				(!att || att.status === false) &&
-				new Date(`1970-01-01T${lessonTime}`) <= now
-			) {
-				absent.push({
-					group_name: g.name,
-					student_id: e.students.id,
-					full_name: e.students.full_name,
-					phone: e.students.phone,
-					parents_name: e.students.parents_name,
-					parents_phone: e.students.parents_phone,
-				});
+			if (lessonStartMinutes <= nowMinutes) {
+				for (const e of g.enrollments) {
+					const student = e.students;
+					const uniqueKey = `${g.id}-${student.id}`;
+
+					if (seenStudents.has(uniqueKey)) continue;
+					seenStudents.add(uniqueKey);
+
+					const att = attMap.get(uniqueKey);
+
+					if (!att || att.status === false) {
+						absent.push({
+                     group_name: g.name,
+                     group_id: g.id,
+							student_id: student.id,
+							full_name: student.full_name,
+							phone: student.phone,
+							parents_name: student.parents_name,
+							parents_phone: student.parents_phone,
+						});
+					}
+				}
 			}
+		} catch (err) {
+			console.warn(`⚠️ Skipping group ${g.id}:`, err.message);
+			continue;
 		}
 	}
 
@@ -128,4 +180,5 @@ async function AbsentStudents() {
 			a.full_name.localeCompare(b.full_name),
 	);
 }
+
 export default { AbsentStudents, MonthlyIncome, TodayLessons, TopDebtors };

@@ -9,8 +9,8 @@ async function getById(id) {
 		where: { id: parseInt(id) },
 		select: {
 			id: true,
-         full_name: true,
-         phone: true,
+			full_name: true,
+			phone: true,
 			groups: {
 				select: {
 					id: true,
@@ -32,10 +32,12 @@ async function getById(id) {
 			},
 		},
 	});
+	if (!teacher) throw { message: "Teacher not found", statusCode: 404 };
+
 	return {
 		id: teacher.id,
-      full_name: teacher.full_name,
-      phone: teacher.phone,
+		full_name: teacher.full_name,
+		phone: teacher.phone,
 		groups: teacher.groups.map((g) => ({
 			id: g.id,
 			name: g.name,
@@ -48,6 +50,11 @@ async function getById(id) {
 
 async function create(data) {
 	const { full_name, phone } = data;
+	const existingTeacher = await prisma.teachers.findFirst({
+		where: { phone },
+	});
+	if (existingTeacher)
+		throw { message: "O'qtivchi allaqachon mavjud", statusCode: 400 };
 	return await prisma.teachers.create({
 		data: { full_name, phone },
 	});
