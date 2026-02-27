@@ -12,17 +12,29 @@ import cookieParser from "cookie-parser";
 // Initialize Express app
 const app = express();
 
-// Middleware
-const corsOption = {
-	origin: "http://localhost:5173", 
-	credentials: true,
-	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-	allowedHeaders: ["Content-Type", "Authorization"],
-	exposedHeaders: ["Set-Cookie"], 
-};
+// Middleware;
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors(corsOption));
+app.use(
+	cors({
+		origin: (origin, callback) => {
+			const allowedOrigins = [
+				"http://localhost:5173",
+				"https://data-space-crm.vercel.app",
+			];
+
+			if (!origin || allowedOrigins.includes(origin)) {
+				callback(null, true);
+			} else {
+				callback(new Error("CORS blocked"));
+			}
+		},
+		credentials: true,
+		methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+		allowedHeaders: ["Content-Type", "Authorization"],
+		exposedHeaders: ["Set-Cookie"],
+	}),
+);
 app.use(helmet());
 
 
