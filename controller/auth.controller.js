@@ -42,9 +42,10 @@ export async function login(req, res) {
 		const data = await authService.login(phone, password);
 		res.cookie("token", data.token, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "strict", 
-			maxAge: 3600000, 
+         secure: true,
+         // domain:'.vercel.app',
+			sameSite: "none",
+			maxAge: 24 * 60 * 60 * 1000,
 		});
 
 		sendSuccess(res, data.user);
