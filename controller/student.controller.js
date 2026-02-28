@@ -32,10 +32,10 @@ export async function getSingleStudent(req, res) {
 }
 export async function createStudent(req, res) {
 	const { full_name, phone, birthday, parents_name, parents_phone } = req.body;
-	if (!full_name || !phone || birthday != null)
+	if (!full_name || !phone)
 		return sendError(
 			res,
-			"Barcha maydonlar to'la bo'lishi shart! full_name, phone, birthday, parents_name, parents_phone",
+			"Barcha maydonlar to'la bo'lishi shart! full_name, phone",
 			400,
 		);
 
@@ -57,10 +57,10 @@ export async function updateStudent(req, res) {
 		return sendError(res, "ID kerak", 400);
 	}
 	const { full_name, phone, birthday, parents_name } = req.body;
-	if (!full_name || !phone || birthday != null) {
+	if (!full_name || !phone) {
 		return sendError(
 			res,
-			"full_name, phone, birthday va parents_name kerak",
+			"full_name, phone kerak",
 			400,
 		);
 	}
