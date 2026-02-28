@@ -10,34 +10,40 @@ export async function getAll(req, res) {
 	}
 }
 export async function create(req, res) {
-	const { full_name, amount, method, description } = req.body;
-	if (!full_name || !amount || !method || !description)
+	const { amount, method, description, worker_id, month } = req.body;
+	if (!amount || !method || !description || !worker_id || !month)
 		return sendError(
 			res,
-			"Barcha maydonlar tola bo'lishi shart! full_name, amount, method, description",
+			"Barcha maydonlar tola bo'lishi shart! amount, method, description, worker_id,month",
 			400,
 		);
 	try {
-		const data = await salaryService.create({ full_name, amount, method, description });
+		const data = await salaryService.create({
+			amount,
+			method,
+			description,
+			worker_id,
+		});
 		sendSuccess(res, data, 201);
 	} catch (error) {
 		sendError(res, "Salary ni yaratishda hatolik yuz berdi", 500, error);
 	}
 }
 export async function update(req, res) {
-	const { full_name, amount, method, description } = req.body;
-	if (!full_name || !amount || !method || !description || !req.params.id)
+	const { amount, method, description, worker_id, month } = req.body;
+	if (!amount || !method || !description || !req.params.id)
 		return sendError(
 			res,
-			"Barcha maydonlar tola bo'lishi shart! full_name, amount, method, description",
+			"Barcha maydonlar tola bo'lishi shart! amount, method, description",
 			400,
 		);
 	try {
 		const data = await salaryService.update({
-			full_name,
 			amount,
 			method,
 			description,
+			worker_id,
+			month,
 			id: req.params.id,
 		});
 		sendSuccess(res, data);
@@ -48,7 +54,7 @@ export async function update(req, res) {
 export async function deleteByid(req, res) {
 	if (!req.params.id) return sendError(res, "Id bo'lishi shart", 400);
 	try {
-	 const data = await salaryService.deleteById(req.params.id);
+		const data = await salaryService.deleteById(req.params.id);
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(res, "Salary ni yangilashda hatolik yuz berdi", 500, error);

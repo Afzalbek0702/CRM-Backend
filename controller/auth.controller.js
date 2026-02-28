@@ -2,8 +2,17 @@ import { sendError, sendSuccess } from "../lib/response.js";
 import authService from "../services/auth.service.js";
 
 export async function registerWorker(req, res) {
-	const { full_name, phone, password, salary, birthday, position, img } =
-		req.body;
+	const {
+		full_name,
+		phone,
+		password,
+		salary,
+		birthday,
+		position,
+		img,
+		salary_type,
+		role,
+	} = req.body;
 
 	if (!phone || !password || !full_name || !position) {
 		return sendError(
@@ -22,6 +31,8 @@ export async function registerWorker(req, res) {
 			birthday,
 			position,
 			img,
+			salary_type,
+			role,
 		});
 
 		sendSuccess(res, data, 201);

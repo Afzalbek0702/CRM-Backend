@@ -141,7 +141,7 @@ async function create(data) {
          phone: data.phone,
       }
    })
-   if (!existing) {
+   if (existing) {
       throw { message: "Bu telefon raqam bilan o'quvchi allaqachon mavjud", statusCode: 400 };
    }
 

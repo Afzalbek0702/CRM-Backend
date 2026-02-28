@@ -3,28 +3,59 @@ import prisma from "../lib/prisma.js";
 async function get() {
 	return await prisma.salary.findMany({
 		where: { status: "ACTIVE" },
+		include: {
+			worker: {
+				select: {
+               phone: true,
+               position: true,
+               full_name: true,
+				},
+			},
+		},
 	});
 }
 
 async function create(data) {
-	return await prisma.salary.create({
+	const worker = await prisma.workers.findUnique({
+		where: { id: data.worker_id },
+		include: { user: true },
+	});
+
+	if (!worker)
+		throw {
+			message: "Xodim topilmadi",
+			statusCode: 404,
+		};
+	const newSalary = await prisma.salary.create({
 		data: {
-			full_name: data.full_name,
-			amount: data.amount,
-			method: data.method,
-			description: data.description,
+			worker_id: data.worker_id,
+			amount: parseFloat(data.amount),
+			method: data.method || "cash",
+			description: data.description || null,
+			month: data.month || new Date().toISOString().slice(0, 7), // "2024-01"
+		},
+		include: {
+			worker: {
+				select: {
+					phone: true,
+					position: true,
+					full_name: true,
+				},
+			},
 		},
 	});
+	return newSalary;
 }
 
 async function update(data) {
 	return await prisma.salary.update({
 		where: { id: parseInt(data.id) },
 		data: {
-			full_name: data.full_name,
+			worker_id: data.worker_id,
 			amount: data.amount,
 			method: data.method,
 			description: data.description,
+			month: data.month || new Date().toISOString().slice(0, 7), // "2024-01"
 		},
 	});
 }

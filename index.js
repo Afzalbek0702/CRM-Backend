@@ -40,7 +40,7 @@ app.use(helmet());
 
 // Routes
 app.use("/auth", authRouter);
-app.use("/api", authMiddleware, requireRole("admin", "manager"), apiRoutes);
+app.use("/api", authMiddleware, requireRole("ADMIN", "MANAGER"), apiRoutes);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

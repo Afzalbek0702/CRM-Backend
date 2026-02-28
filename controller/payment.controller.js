@@ -26,7 +26,7 @@ export async function createPayment(req, res) {
 			method,
 			paid_month,
 		});
-		sendSuccess(res, newPayment);
+		sendSuccess(res, newPayment,201);
 	} catch (error) {
 		sendError(res, "Payment yaratishda xatolik yuz berdi", 500, error);
 	}

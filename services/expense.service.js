@@ -15,7 +15,6 @@ async function create(data) {
 async function getAll() {
 	return await prisma.expenses.findMany({
 		where: { status: "ACTIVE" },
-		where: { status: "active" },
 		orderBy: { created_at: "desc" },
 	});
 }

@@ -11,6 +11,18 @@ async function getById(id) {
 			id: true,
 			full_name: true,
 			phone: true,
+			worker: {
+				select: {
+					id: true,
+					position: true,
+					salary: true,
+					salary_type: true,
+					birthday: true,
+					img: true,
+					hired_at: true,
+					status: true,
+				},
+			},
 			groups: {
 				select: {
 					id: true,
@@ -38,6 +50,11 @@ async function getById(id) {
 		id: teacher.id,
 		full_name: teacher.full_name,
 		phone: teacher.phone,
+		position: teacher.worker.position,
+		salary: teacher.worker.salary,
+		salary_type: teacher.worker.salary_type,
+		hired_at: teacher.worker.hired_at,
+		status: teacher.worker.status,
 		groups: teacher.groups.map((g) => ({
 			id: g.id,
 			name: g.name,

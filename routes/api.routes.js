@@ -18,7 +18,7 @@ const router = Router();
 router.use("/groups", groupsRouter);
 router.use("/students", studentsRouter);
 router.use("/teachers", teachersRouter);
-router.use("/enrollments", enrollmentsRoutes);
+router.use("/enrollment", enrollmentsRoutes);
 router.use("/payments", paymentsRoutes);
 router.use("/attendance", attendanceRoutes);
 router.use("/dashboard", dashboardRoutes);

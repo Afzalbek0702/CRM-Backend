@@ -6,14 +6,14 @@ const router = Router();
 router.get("/", paymentController.getAllPayments);
 router.post(
 	"/",
-	requireRole("admin", "manager"),
+	requireRole("ADMIN", "MANAGER"),
 	paymentController.createPayment,
 );
 router.get("/:id", paymentController.getPaymentById);
 router.put(
 	"/:id",
-	requireRole("admin", "manager"),
+	requireRole("ADMIN", "MANAGER"),
 	paymentController.updatePayment,
 );
-router.delete("/:id", requireRole("admin"), paymentController.deletePayment);
+router.delete("/:id", requireRole("ADMIN"), paymentController.deletePayment);
 export default router;
