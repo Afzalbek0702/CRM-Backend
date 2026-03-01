@@ -10,7 +10,10 @@ async function MonthlyIncome(from, to) {
 		_sum: { amount: true },
 		where: {
 			status: "ACTIVE",
-			paid_at: { gte: new Date(from), lte: new Date(adjustedTo) },
+			paid_at: {
+				gte: new Date(`${from}T00:00:00Z`),
+				lte: new Date(`${adjustedTo}T23:59:59Z`),
+			},
 		},
 		orderBy: { paid_at: "asc" },
 	});
@@ -137,13 +140,11 @@ async function AbsentStudents() {
 	);
 
 	const absent = [];
-	const seenStudents = new Set(); 
+	const seenStudents = new Set();
 
 	for (const g of groups) {
 		try {
-		
 			const { start: lessonStartMinutes } = parseLessonTime(g.lesson_time);
-
 
 			if (lessonStartMinutes <= nowMinutes) {
 				for (const e of g.enrollments) {
@@ -157,8 +158,8 @@ async function AbsentStudents() {
 
 					if (!att || att.status === false) {
 						absent.push({
-                     group_name: g.name,
-                     group_id: g.id,
+							group_name: g.name,
+							group_id: g.id,
 							student_id: student.id,
 							full_name: student.full_name,
 							phone: student.phone,

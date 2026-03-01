@@ -58,7 +58,8 @@ export async function login(req, res) {
 			sameSite: "none",
 			maxAge: 24 * 60 * 60 * 1000,
 		});
-
+      console.log(data);
+      
 		sendSuccess(res, data.user);
 	} catch (error) {
 		sendError(

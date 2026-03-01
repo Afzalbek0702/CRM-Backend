@@ -103,12 +103,12 @@ async function login(phone, password) {
 			message: "Parol noto‘g‘ri",
 			statusCode: 400,
 		};
-
+   
 	const token = jwt.sign(
 		{
 			id: user.id,
 			phone: user.phone,
-			username: user.worker?.full_name || "Xodim",
+			username: user.worker.full_name,
 			role: user.role,
 		},
 		process.env.JWT_SECRET,
@@ -118,7 +118,7 @@ async function login(phone, password) {
 	const userData = {
 		id: user.id,
 		phone: user.phone,
-		username: user.username,
+		username: user.worker.full_name,
 		role: user.role,
 		created_at: user.created_at,
 	};

@@ -9,23 +9,6 @@ export async function getAllTeachers(req, res) {
 		sendError(res, "O'qituvchilarni olishda xatolik yuz berdi", 500, error);
 	}
 }
-export async function createTeacher(req, res) {
-	const { full_name, phone } = req.body;
-	if (!full_name || !phone) {
-		return sendError(res, "To'liq ma'lumot kiriting", 400);
-	}
-	try {
-		const newTeacher = await teacherService.create({ full_name, phone });
-		sendSuccess(res, newTeacher, 201);
-	} catch (error) {
-		sendError(
-			res,
-			error.message || "O'qituvchilarni qo'shishda xatolik yuz berdi",
-			error.statusCode || 500,
-			error,
-		);
-	}
-}
 export async function getTeacherById(req, res) {
 	if (!req.params.id) {
 		return sendError(res, "ID kiriting", 400);

@@ -65,27 +65,39 @@ async function getById(id) {
 	};
 }
 
-async function create(data) {
-	const { full_name, phone } = data;
-	const existingTeacher = await prisma.teachers.findFirst({
-		where: { phone },
-	});
-	if (existingTeacher)
-		throw { message: "O'qtivchi allaqachon mavjud", statusCode: 400 };
-	return await prisma.teachers.create({
-		data: { full_name, phone },
-	});
-}
+async function update(data) {
+	const { full_name, phone, position, salary, id } = data;
 
-async function update(id, data) {
-	const { full_name, phone } = data;
-	return await prisma.teachers.update({
-		where: { id: parseInt(id) },
-		data: {
-			full_name,
-			phone,
-		},
+	const result = await prisma.$transaction(async (tx) => {
+		// 1. Teacher ni update
+		const teacher = await tx.teachers.update({
+			where: { id: parseInt(id) },
+			data: {
+				full_name,
+				phone,
+			},
+		});
+
+		// 2. Worker ni update
+		const worker = await tx.workers.update({
+			where: { id: teacher.workerId },
+			data: {
+				full_name,
+				phone,
+				position,
+				salary,
+			},
+		});
+		const user = await tx.users.update({
+			where: { id: worker.user_id },
+			data: {
+				phone,
+			},
+		});
+		return { teacher, worker,user };
 	});
+
+	return result;
 }
 
 async function deleteById(id) {
@@ -98,7 +110,6 @@ async function deleteById(id) {
 export default {
 	getAll,
 	getById,
-	create,
 	update,
 	deleteById,
 };
