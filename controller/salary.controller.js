@@ -3,7 +3,7 @@ import { sendError, sendSuccess } from "../lib/response.js";
 
 export async function getAll(req, res) {
 	try {
-		const data = await salaryService.get();
+		const data = await salaryService.get(req.tenantId);
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(res, "Salary ni olishda hatolik yuz berdi", 500, error);
@@ -23,6 +23,7 @@ export async function create(req, res) {
 			method,
 			description,
 			worker_id,
+			tenant_id: req.tenantId,
 		});
 		sendSuccess(res, data, 201);
 	} catch (error) {
@@ -45,6 +46,7 @@ export async function update(req, res) {
 			worker_id,
 			month,
 			id: req.params.id,
+			tenant_id: req.tenantId,
 		});
 		sendSuccess(res, data);
 	} catch (error) {
@@ -54,7 +56,7 @@ export async function update(req, res) {
 export async function deleteByid(req, res) {
 	if (!req.params.id) return sendError(res, "Id bo'lishi shart", 400);
 	try {
-		const data = await salaryService.deleteById(req.params.id);
+		const data = await salaryService.deleteById(req.params.id, req.tenantId);
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(res, "Salary ni yangilashda hatolik yuz berdi", 500, error);

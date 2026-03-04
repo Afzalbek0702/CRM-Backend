@@ -5,8 +5,8 @@ import helmet from "helmet";
 import { fileURLToPath } from "url";
 import authRouter from "./routes/auth.routes.js";
 import apiRoutes from "./routes/api.routes.js";
-import { requireRole } from "./middleware/roleMiddleware.js";
 import { authMiddleware } from "./middleware/authMiddleware.js";
+import { tenantMiddleware } from "./middleware/tenenatMiddleware.js";
 import cookieParser from "cookie-parser";
 
 // Initialize Express app
@@ -37,10 +37,14 @@ app.use(
 );
 app.use(helmet());
 
-
 // Routes
 app.use("/auth", authRouter);
-app.use("/api", authMiddleware, requireRole("ADMIN", "MANAGER"), apiRoutes);
+app.use(
+	"/:tenantName/api",
+	tenantMiddleware,
+	authMiddleware,
+	apiRoutes,
+);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

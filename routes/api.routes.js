@@ -13,21 +13,25 @@ import roomRoutes from "./room.routes.js";
 import expenseRoutes from "./expense.routes.js";
 import salaryRouters from "./salary.routes.js";
 import courseRouters from "./course.routes.js";
+import { requireRole } from "../middleware/roleMiddleware.js";
 const router = Router();
 
-router.use("/groups", groupsRouter);
-router.use("/students", studentsRouter);
-router.use("/teachers", teachersRouter);
-router.use("/enrollment", enrollmentsRoutes);
-router.use("/payments", paymentsRoutes);
-router.use("/attendance", attendanceRoutes);
-router.use("/dashboard", dashboardRoutes);
-router.use("/leads", leadsRoutes);
-router.use("/archive", archiveRoutes);
-router.use("/room", roomRoutes);
-router.use("/expense", expenseRoutes);
-router.use("/salary", salaryRouters);
-router.use("/course", courseRouters);
-router.use("/worker", workerRoutes);
+router.use("/worker", requireRole("CEO", "ADMIN"), workerRoutes);
+router.use("/teachers", requireRole("CEO", "ADMIN"), teachersRouter);
+router.use("/salary", requireRole("CEO", "ADMIN"), salaryRouters);
+
+router.use("/groups",requireRole("CEO", "ADMIN", "MANAGER", "TEACHER"),	groupsRouter);
+router.use(	"/students",requireRole("CEO", "ADMIN", "MANAGER", "TEACHER"),studentsRouter);
+router.use("/course", requireRole("CEO", "ADMIN", "MANAGER"), courseRouters);
+
+router.use("/enrollment",	requireRole("CEO", "ADMIN", "MANAGER"),enrollmentsRoutes);
+router.use("/payments", requireRole("CEO", "ADMIN", "MANAGER"), paymentsRoutes);
+router.use("/attendance", requireRole("CEO", "ADMIN", "MANAGER", "TEACHER"), attendanceRoutes);
+
+router.use("/dashboard",requireRole("CEO", "ADMIN", "MANAGER"),dashboardRoutes);
+router.use("/leads", requireRole("CEO", "ADMIN", "MANAGER"), leadsRoutes);
+router.use("/archive", requireRole("CEO", "ADMIN"), archiveRoutes);
+router.use("/room", requireRole("CEO", "ADMIN"), roomRoutes);
+router.use("/expense", requireRole("CEO", "ADMIN", "MANAGER"), expenseRoutes);
 
 export default router;

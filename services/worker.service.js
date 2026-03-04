@@ -1,23 +1,32 @@
 import prisma from "../lib/prisma.js";
 
-async function getAll() {
-	return await prisma.workers.findMany();
+async function getAll(tenant_id) {
+	return await prisma.workers.findMany({ where: { tenant_id: tenant_id } });
 }
 
-async function updateRole(id, role) {
+async function updateRole(id, role, tenant_id) {
 	return await prisma.users.update({
-		where: { id: parseInt(id) },
+		where: {tenant_id:tenant_id, id: parseInt(id) },
 		data: { role },
 	});
 }
 
 async function update(data) {
-	const { full_name, phone, position, salary, birthday, img, id, user_id } =
-		data;
+	const {
+		full_name,
+		phone,
+		position,
+		salary,
+		birthday,
+		img,
+		id,
+		user_id,
+		tenant_id,
+	} = data;
 
 	return await prisma.$transaction([
 		prisma.workers.update({
-			where: { id: parseInt(id) },
+			where: {tenant_id:tenant_id, id: parseInt(id) },
 			data: {
 				full_name,
 				phone,
@@ -34,9 +43,9 @@ async function update(data) {
 	]);
 }
 
-async function deleteById(id) {
+async function deleteById(id, tenant_id) {
 	return await prisma.users.delete({
-		where: { id: parseInt(id) },
+		where: {tenant_id:tenant_id, id: parseInt(id) },
 	});
 }
 

@@ -14,10 +14,10 @@ export async function registerWorker(req, res) {
 		role,
 	} = req.body;
 
-	if (!phone || !password || !full_name || !position) {
+	if (!phone || !password || !full_name || !role) {
 		return sendError(
 			res,
-			"Majburiy maydonlar to‘ldirilmagan! phone, password, full_name, position",
+			"Majburiy maydonlar to‘ldirilmagan! phone, password, full_name, role",
 			400,
 		);
 	}
@@ -33,6 +33,7 @@ export async function registerWorker(req, res) {
 			img,
 			salary_type,
 			role,
+			tenant_id: req.tenantId,
 		});
 
 		sendSuccess(res, data, 201);
@@ -50,17 +51,14 @@ export async function login(req, res) {
 	const { phone, password } = req.body;
 
 	try {
-		const data = await authService.login(phone, password);
+		const data = await authService.login(phone, password, req.tenantId);
 		res.cookie("token", data.token, {
 			httpOnly: true,
-         secure: true,
-         // domain:'.vercel.app',
+			secure: true,
 			sameSite: "none",
-			maxAge: 24 * 60 * 60 * 1000,
+         maxAge: 7 * 60 * 60 * 1000,
 		});
-      console.log(data);
-      
-		sendSuccess(res, data.user);
+		sendSuccess(res, data);
 	} catch (error) {
 		sendError(
 			res,
@@ -80,6 +78,7 @@ export async function changePassword(req, res) {
 			userId,
 			oldPassword,
 			newPassword,
+			req.tenantId,
 		);
 
 		sendSuccess(res, data);

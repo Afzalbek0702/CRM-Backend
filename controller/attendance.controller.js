@@ -10,11 +10,16 @@ export async function getAttendance(req, res) {
 		const [year, mon] = month.split("-").map(Number);
 		const startDate = `${month}-01`;
 		const endDate = `${month}-${new Date(year, mon, 0).getDate()}`;
-      
+
 		const [group, students, allAttendance] = await Promise.all([
-			attendanceService.getGroupDetails(group_id),
-			attendanceService.getStudentsInGroup(group_id),
-			attendanceService.getMonthlyAttendance(group_id, startDate, endDate),
+			attendanceService.getGroupDetails(group_id, req.tenantId),
+			attendanceService.getStudentsInGroup(group_id, req.tenantId),
+			attendanceService.getMonthlyAttendance(
+				group_id,
+				startDate,
+				endDate,
+				req.tenantId,
+			),
 		]);
 
 		if (!group) return sendError(res, "Guruh topilmadi", 404);
@@ -40,7 +45,6 @@ export async function getAttendance(req, res) {
 				const dateObj = new Date(year, mon - 1, day);
 				const dayOfWeek = dateObj.getDay(); // 0 (Sun) - 6 (Sat)
 
-				
 				const isoDay = dayOfWeek === 0 ? 7 : dayOfWeek;
 				const isLessonDay =
 					numericLessonDays.includes(dayOfWeek) ||
@@ -93,6 +97,7 @@ export async function setAttendance(req, res) {
 			student_id,
 			lesson_date,
 			status,
+			tenant_id: req.tenantId,
 		});
 		sendSuccess(res, data);
 	} catch (error) {

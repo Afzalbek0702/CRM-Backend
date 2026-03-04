@@ -4,13 +4,13 @@ import { requireRole } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", requireRole("ADMIN"), workerController.getUsers);
-router.put("/:id", requireRole("ADMIN"), workerController.update);
+router.get("/", requireRole("CEO", "ADMIN"), workerController.getUsers);
+router.put("/:id", requireRole("CEO", "ADMIN"), workerController.update);
 router.patch(
 	"/:id/role",
-	requireRole("ADMIN"),
+	requireRole("CEO", "ADMIN"),
 	workerController.updateUserRole,
 );
-router.delete("/:id", requireRole("ADMIN"), workerController.deleteUser);
+router.delete("/:id", requireRole("CEO", "ADMIN"), workerController.deleteUser);
 
 export default router;

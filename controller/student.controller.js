@@ -3,7 +3,7 @@ import { sendSuccess, sendError } from "../lib/response.js";
 
 export async function getAllStudents(req, res) {
 	try {
-		const rows = await studentService.getAll();
+		const rows = await studentService.getAll(req.tenantId);
 		sendSuccess(res, rows);
 	} catch (error) {
 		sendError(
@@ -19,7 +19,7 @@ export async function getSingleStudent(req, res) {
 		return sendError(res, "ID kerak", 400);
 	}
 	try {
-		const student = await studentService.getById(req.params.id);
+		const student = await studentService.getById(req.params.id, req.tenantId);
 		sendSuccess(res, student);
 	} catch (error) {
 		sendError(
@@ -46,6 +46,7 @@ export async function createStudent(req, res) {
 			birthday,
 			parents_name,
 			parents_phone,
+			tenant_id: req.tenantId,
 		});
 		sendSuccess(res, newStudent, 201);
 	} catch (error) {
@@ -58,11 +59,7 @@ export async function updateStudent(req, res) {
 	}
 	const { full_name, phone, birthday, parents_name } = req.body;
 	if (!full_name || !phone) {
-		return sendError(
-			res,
-			"full_name, phone kerak",
-			400,
-		);
+		return sendError(res, "full_name, phone kerak", 400);
 	}
 	try {
 		const updatedStudent = await studentService.update(req.params.id, {
@@ -70,6 +67,7 @@ export async function updateStudent(req, res) {
 			phone,
 			birthday,
 			parents_name,
+			tenant_id: req.tenantId,
 		});
 		if (!updatedStudent) {
 			return sendError(res, "O'quvchi topilmadi", 404);
@@ -89,14 +87,15 @@ export async function updateStudentStatus(req, res) {
 	if (!req.params.id || !status) {
 		return sendError(res, "ID va status kerak", 400);
 	}
-	// const allowed = ["active", "frozen", "finished", "debtor"];
-	// if (!allowed.includes(status)) {
-	// 	return sendError(res, "Noto‘g‘ri status", 400);
-	// }
+	const allowed = ["ACTIVE", "INACTIVE", "GRADUATED", "DELETED", "DEBTOR","FROZEN", "ARCHIVED"];
+	if (!allowed.includes(status)) {
+		return sendError(res, "Noto‘g‘ri status", 400);
+	}
 	try {
 		const student = await studentService.updateStatus(
 			req.params.id,
 			status.toUpperCase(),
+			req.tenantId,
 		);
 		sendSuccess(res, student);
 	} catch (error) {
@@ -113,7 +112,10 @@ export async function deleteStudent(req, res) {
 		return sendError(res, "ID kerak", 400);
 	}
 	try {
-		const removeStudent = await studentService.softDelete(req.params.id);
+		const removeStudent = await studentService.softDelete(
+			req.params.id,
+			req.tenantId,
+		);
 		sendSuccess(res, removeStudent);
 	} catch (error) {
 		sendError(
@@ -130,7 +132,7 @@ export async function getStudentProfile(req, res) {
 	if (!id) return sendError(res, "ID kerak", 400);
 
 	try {
-		const profile = await studentService.getStudentProfile(id);
+		const profile = await studentService.getStudentProfile(id, req.tenantId);
 		if (!profile) return sendError(res, "O'quvchi topilmadi", 404);
 		sendSuccess(res, profile);
 	} catch (error) {
@@ -157,6 +159,7 @@ export async function transferStudent(req, res) {
 			student_id,
 			from_group_id,
 			to_group_id,
+			tenant_id: req.tenantId,
 		});
 		sendSuccess(res, data);
 	} catch (error) {
@@ -183,6 +186,7 @@ export async function removeStudentFromGroup(req, res) {
 		const data = await studentService.removeStudentFromGroup(
 			studentId,
 			groupId,
+			req.tenantId,
 		);
 		sendSuccess(res, data);
 	} catch (error) {

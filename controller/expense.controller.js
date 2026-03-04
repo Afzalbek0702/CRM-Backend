@@ -3,7 +3,7 @@ import { sendError, sendSuccess } from "../lib/response.js";
 
 export async function getAll(req, res) {
 	try {
-		const data = await expensesService.getAll();
+		const data = await expensesService.getAll(req.tenantId);
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(res, "Xarajatlarni olishda xatolik yuz berdi", 500, error);
@@ -17,7 +17,13 @@ export async function create(req, res) {
 			"Barcha maydonlar to'la bo'lishi shart! description, amount, method, created_by",
 		);
 	try {
-		const data = await expensesService.create({ description, amount, method, created_by });
+		const data = await expensesService.create({
+			description,
+			amount,
+			method,
+			created_by,
+			tenant_id: req.tenantId,
+		});
 		sendSuccess(res, data, 201);
 	} catch (error) {
 		sendError(res, "Xarajatni yaratishda xatolik yuz berdi", 500, error);
@@ -37,6 +43,7 @@ export async function update(req, res) {
 			method,
 			created_by,
 			id: req.params.id,
+			tenant_id: req.tenantId,
 		});
 		sendSuccess(res, data);
 	} catch (error) {
@@ -46,7 +53,7 @@ export async function update(req, res) {
 export async function deleteById(req, res) {
 	if (!req.params.id) return sendError(res, "Id Topilmadi", 400);
 	try {
-		const data = await expensesService.deleteByid(req.params.id);
+		const data = await expensesService.deleteByid(req.params.id, req.tenantId);
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(res, "Xarajatni o'chirishda xatolik yuz berdi", 500, error);

@@ -1,8 +1,11 @@
 import prisma from "../lib/prisma.js";
 
-async function getPayments() {
+async function getPayments(tenant_id) {
 	const payments = await prisma.payments.findMany({
-		where: { status: "DELETED" },
+		where: {
+			tenant_id,
+			status: "DELETED",
+		},
 		include: {
 			students: { select: { full_name: true } },
 			groups: { select: { name: true } },
@@ -17,32 +20,33 @@ async function getPayments() {
 	}));
 }
 
-async function getLeads() {
+async function getLeads(tenant_id) {
 	return await prisma.leads.findMany({
-		where: { status: "DELETED" },
+		where: { status: "DELETED", tenant_id },
 		orderBy: { created_at: "desc" },
 	});
 }
 
-async function getGroups() {
+async function getGroups(tenant_id) {
 	return await prisma.groups.findMany({
-		where: { status: "ARCHIVED" },
+		where: { status: "ARCHIVED", tenant_id },
 		orderBy: { created_at: "desc" },
 	});
 }
 
-async function getGroupById(id) {
+async function getGroupById(id, tenant_id) {
 	return await prisma.groups.findMany({
 		where: {
 			id: parseInt(id),
 			status: "ARCHIVED",
+			tenant_id,
 		},
 	});
 }
 
-async function getGroupsStudents() {
+async function getGroupsStudents(tenant_id) {
 	const enrollments = await prisma.enrollments.findMany({
-		where: { status: "ARCHIVED" },
+		where: { status: "ARCHIVED", tenant_id },
 		include: {
 			students: { select: { full_name: true } },
 			groups: { select: { name: true } },
@@ -58,16 +62,16 @@ async function getGroupsStudents() {
 	}));
 }
 
-async function getStudents() {
+async function getStudents(tenant_id) {
 	return await prisma.students.findMany({
-		where: { status: "DELETED" },
+		where: { status: "DELETED", tenant_id },
 		orderBy: { created_at: "desc" },
 	});
 }
 
-async function getTeachers() {
+async function getTeachers(tenant_id) {
 	return await prisma.teachers.findMany({
-		where: { status: "DELETED" },
+		where: { status: "DELETED", tenant_id },
 	});
 }
 

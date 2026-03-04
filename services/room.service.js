@@ -1,25 +1,26 @@
 import prisma from "../lib/prisma.js";
 
-async function get() {
+async function get(tenant_id) {
 	const today = new Date().toLocaleDateString("en-US", { weekday: "short" });
 
-	const rooms = await prisma.rooms.findMany({
-		include: {
-			groups: {
-				where: {
-					lesson_days: {
-						has: today,
+   const rooms = await prisma.rooms.findMany({
+			where: { tenant_id: tenant_id, status: "ACTIVE" },
+			include: {
+				groups: {
+					where: {
+						lesson_days: {
+							has: today,
+						},
+					},
+					orderBy: {
+						lesson_time: "asc",
 					},
 				},
-				orderBy: {
-					lesson_time: "asc",
-				},
 			},
-		},
-		orderBy: {
-			name: "asc",
-		},
-	});
+			orderBy: {
+				name: "asc",
+			},
+		});
 
 	return rooms.flatMap((r) => {
 		const groupsToProcess = r.groups.length > 0 ? r.groups : [null];
@@ -36,11 +37,11 @@ async function get() {
 	});
 }
 
-async function getById(id) {
+async function getById(id, tenant_id) {
 	const today = new Date().toLocaleDateString("en-US", { weekday: "short" });
 
 	const r = await prisma.rooms.findUnique({
-		where: { id: parseInt(id) },
+		where: {tenant_id:tenant_id, id: parseInt(id) },
 		include: {
 			groups: {
 				where: {
@@ -51,7 +52,7 @@ async function getById(id) {
 		},
 	});
 
-	if (!r) return [];
+	if (!r) throw { message: "Xona topilmadi", statusCode: 404 };
 
 	// Agar guruhlar bo'lmasa, faqat xonani qaytaramiz
 	if (r.groups.length === 0)
@@ -64,6 +65,7 @@ async function getById(id) {
 		};
 
 	return r.groups.map((g) => ({
+		room_id: r.id,
 		room_name: r.name,
 		capacity: r.capacity,
 		status: r.status,
@@ -73,24 +75,24 @@ async function getById(id) {
 	}));
 }
 
-async function create(name, capacity) {
+async function create(name, capacity, tenant_id) {
 	const room = await prisma.rooms.create({
-		data: { name, capacity },
+		data: { name, capacity: parseInt(capacity), tenant_id },
 	});
 	return [room];
 }
 
-async function update(name, capacity, id) {
+async function update(name, capacity, id, tenant_id) {
 	const updatedRoom = await prisma.rooms.update({
-		where: { id: parseInt(id) },
-		data: { name, capacity },
+		where: {tenant_id:tenant_id, id: parseInt(id) },
+		data: { name, capacity: parseInt(capacity) },
 	});
 	return [updatedRoom];
 }
 
-async function deleteById(id) {
+async function deleteById(id, tenant_id) {
 	const archivedRoom = await prisma.rooms.update({
-		where: { id: parseInt(id) },
+		where: {tenant_id:tenant_id, id: parseInt(id) },
 		data: { status: "ARCHIVE" },
 	});
 	return [archivedRoom];

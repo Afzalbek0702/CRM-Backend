@@ -13,6 +13,7 @@ async function registerWorker(data) {
 		img,
 		salary_type,
 		role,
+		tenant_id,
 	} = data;
 
 	// 1. Telefon raqam borligini tekshirish
@@ -38,6 +39,7 @@ async function registerWorker(data) {
 				phone,
 				password_hash,
 				role: role || "WORKER",
+				tenant_id,
 			},
 		});
 
@@ -47,11 +49,12 @@ async function registerWorker(data) {
 				user_id: newUser.id,
 				full_name: full_name || "Ism yo'q",
 				phone: phone,
-				position: position || (role === "TEACHER" ? "TEACHER" : "WORKER"),
+				position: position,
 				salary: salary ? parseFloat(salary) : null,
 				salary_type: salary_type || "CASH",
-            birthday: birthday ? new Date(birthday) : null,
-            img: img || null,
+				birthday: birthday === null ? new Date(birthday) : null,
+				img: img || null,
+				tenant_id,
 			},
 		});
 
@@ -63,6 +66,7 @@ async function registerWorker(data) {
 					workerId: newWorker.id,
 					full_name: newWorker.full_name,
 					phone: newWorker.phone,
+					tenant_id,
 				},
 			});
 		}
@@ -71,9 +75,9 @@ async function registerWorker(data) {
 	});
 	return result;
 }
-async function login(phone, password) {
+async function login(phone, password, tenant_id) {
 	const user = await prisma.users.findUnique({
-		where: { phone },
+		where: { phone, tenant_id },
 		include: {
 			worker: {
 				include: {
@@ -82,7 +86,9 @@ async function login(phone, password) {
 			},
 		},
 	});
-
+	const tenant = await prisma.tenants.findUnique({
+		where: { id: user.tenant_id },
+	});
 	if (!user)
 		throw {
 			message: "Foydalanuvchi topilmadi",
@@ -103,11 +109,11 @@ async function login(phone, password) {
 			message: "Parol noto‘g‘ri",
 			statusCode: 400,
 		};
-   
+
 	const token = jwt.sign(
 		{
 			id: user.id,
-			phone: user.phone,
+			teacher_id: user.role == "TEACHER" ? user.worker.teacher.id : "",
 			username: user.worker.full_name,
 			role: user.role,
 		},
@@ -117,6 +123,7 @@ async function login(phone, password) {
 	// 6. Foydalanuvchi ma'lumotlarini tayyorlash
 	const userData = {
 		id: user.id,
+		teacher_id: user.role == "TEACHER" ? user.worker.teacher.id : "",
 		phone: user.phone,
 		username: user.worker.full_name,
 		role: user.role,
@@ -145,15 +152,16 @@ async function login(phone, password) {
 
 	// 7. Muaffaqiyatli javob
 	return {
-		token,
+      token,
+      tenant:tenant.subdomain,
 		user: userData,
-		profile: profileData,
+		// profile: profileData,
 	};
 }
 
-async function updatePassword(userId, oldPassword, newPassword) {
+async function updatePassword(userId, oldPassword, newPassword, tenant_id) {
 	const user = await prisma.users.findUnique({
-		where: { id: parseInt(userId) },
+		where: { id: parseInt(userId), tenant_id: tenant_id },
 	});
 	if (!user) throw { message: "User topilmadi", statusCode: 404 };
 

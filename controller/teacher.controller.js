@@ -3,7 +3,7 @@ import { sendSuccess, sendError } from "../lib/response.js";
 
 export async function getAllTeachers(req, res) {
 	try {
-		const teachers = await teacherService.getAll();
+		const teachers = await teacherService.getAll(req.tenantId);
 		sendSuccess(res, teachers);
 	} catch (error) {
 		sendError(res, "O'qituvchilarni olishda xatolik yuz berdi", 500, error);
@@ -14,7 +14,7 @@ export async function getTeacherById(req, res) {
 		return sendError(res, "ID kiriting", 400);
 	}
 	try {
-		const teacher = await teacherService.getById(req.params.id);
+		const teacher = await teacherService.getById(req.params.id, req.tenantId);
 		sendSuccess(res, teacher);
 	} catch (error) {
 		sendError(
@@ -31,7 +31,12 @@ export async function updateTeacher(req, res) {
 	if (!full_name || !phone)
 		return sendError(res, "To'liq ma'lumot kiriting!  full_name, phone", 400);
 	try {
-		const data = await teacherService.update(req.params.id, { full_name, phone });
+		const data = await teacherService.update({
+			id: req.params.id,
+			full_name,
+			phone,
+			tenant_id: req.tenantId,
+		});
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(res, "O'qituvchilarni yangilashda xatolik yuz berdi", 500, error);
@@ -40,8 +45,8 @@ export async function updateTeacher(req, res) {
 export async function deleteTeacher(req, res) {
 	if (!req.params.id) return sendError(res, "ID kiriting", 400);
 	try {
-		const data = await teacherService.deleteById(req.params.id);
-		sendSuccess(res,data);
+		const data = await teacherService.deleteById(req.params.id, req.tenantId);
+		sendSuccess(res, data);
 	} catch (error) {
 		sendError(res, "O'qituvchini o'chirishda xatolik yuz berdi", 500, error);
 	}

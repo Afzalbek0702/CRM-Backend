@@ -7,13 +7,13 @@ router.post("/login", authController.login);
 router.post(
 	"/change-password",
 	authMiddleware,
-	requireRole("ADMIN"),
+	requireRole("CEO", "ADMIN"),
 	authController.changePassword,
 );
 router.post(
 	"/register",
-	// authMiddleware,
-	// requireRole("admin"),
+	authMiddleware,
+	requireRole("CEO", "ADMIN"),
 	authController.registerWorker,
 );
 export default router;

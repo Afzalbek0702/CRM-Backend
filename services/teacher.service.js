@@ -1,12 +1,14 @@
 import prisma from "../lib/prisma.js";
 
-async function getAll() {
-	return await prisma.teachers.findMany();
+async function getAll(tenant_id) {
+	return await prisma.teachers.findMany({
+		where: { tenant_id: tenant_id, status: "DELETED" },
+	});
 }
 
-async function getById(id) {
+async function getById(id, tenant_id) {
 	const teacher = await prisma.teachers.findUnique({
-		where: { id: parseInt(id) },
+		where: {tenant_id:tenant_id, id: parseInt(id) },
 		select: {
 			id: true,
 			full_name: true,
@@ -66,12 +68,12 @@ async function getById(id) {
 }
 
 async function update(data) {
-	const { full_name, phone, position, salary, id } = data;
+	const { full_name, phone, position, salary, id, tenant_id } = data;
 
 	const result = await prisma.$transaction(async (tx) => {
 		// 1. Teacher ni update
 		const teacher = await tx.teachers.update({
-			where: { id: parseInt(id) },
+			where: {tenant_id:tenant_id, id: parseInt(id) },
 			data: {
 				full_name,
 				phone,
@@ -94,15 +96,15 @@ async function update(data) {
 				phone,
 			},
 		});
-		return { teacher, worker,user };
+		return { teacher, worker, user };
 	});
 
 	return result;
 }
 
-async function deleteById(id) {
+async function deleteById(id, tenant_id) {
 	return await prisma.teachers.update({
-		where: { id: parseInt(id) },
+		where: {tenant_id:tenant_id, id: parseInt(id) },
 		data: { status: "DELETED" },
 	});
 }

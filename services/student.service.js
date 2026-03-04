@@ -3,9 +3,10 @@ const now = new Date();
 const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-async function getAll() {
+async function getAll(tenant_id) {
 	const students = await prisma.students.findMany({
-		where: {
+      where: {
+         tenant_id:tenant_id,
 			status: {
 				not: "DELETED",
 			},
@@ -78,9 +79,9 @@ async function getAll() {
 	});
 	return result;
 }
-async function getById(id) {
+async function getById(id, tenant_id) {
 	const student = await prisma.students.findUnique({
-		where: { id: parseInt(id) },
+		where: {tenant_id:tenant_id, id: parseInt(id) },
 		include: {
 			enrollments: {
 				where: { status: "ACTIVE" },
@@ -138,6 +139,7 @@ async function getById(id) {
 async function create(data) {
    const existing = await prisma.students.findFirst({
       where: {
+         tenant_id:data.tenant_id,
          phone: data.phone,
       }
    })
@@ -158,7 +160,7 @@ async function create(data) {
 
 async function update(id, data) {
 	return await prisma.students.update({
-		where: { id: parseInt(id) },
+		where: {tenant_id:data.tenant_id, id: parseInt(id) },
 		data: {
 			full_name: data.full_name,
 			phone: data.phone,
@@ -169,16 +171,16 @@ async function update(id, data) {
 	});
 }
 
-async function updateStatus(id, status) {
+async function updateStatus(id, status, tenant_id) {
 	return await prisma.students.update({
-		where: { id: parseInt(id) },
+		where: {tenant_id:tenant_id, id: parseInt(id) },
 		data: { status },
 	});
 }
 
-async function softDelete(id) {
+async function softDelete(id, tenant_id) {
 	return await prisma.students.update({
-		where: { id: parseInt(id) },
+		where: { tenant_id: tenant_id, id: parseInt(id) },
 		data: {
 			status: "DELETED",
 			deleted_at: new Date(),
@@ -186,17 +188,17 @@ async function softDelete(id) {
 	});
 }
 
-async function hardDelete(id) {
+async function hardDelete(id, tenant_id) {
 	const result = await prisma.students.delete({
-		where: { id: parseInt(id) },
+		where: { tenant_id: tenant_id, id: parseInt(id) },
 	});
 	return !!result;
 }
 
-async function getStudentProfile(id) {
+async function getStudentProfile(id, tenant_id) {
 	const studentId = parseInt(id);
 	const data = await prisma.students.findUnique({
-		where: { id: studentId },
+		where: {tenant_id:tenant_id, id: studentId },
 		include: {
 			enrollments: {
 				include: { groups: true },
@@ -246,12 +248,13 @@ async function getStudentProfile(id) {
 }
 
 async function transferStudent(data) {
-	const { student_id, from_group_id, to_group_id } = data;
+	const { student_id, from_group_id, to_group_id, tenant_id } = data;
 
 	return await prisma.$transaction(async (tx) => {
 		// 1. Eskisini arxivlash
 		await tx.enrollments.updateMany({
-			where: {
+         where: {
+            tenant_id:tenant_id,
 				student_id: parseInt(student_id),
 				group_id: parseInt(from_group_id),
 				status: "ACTIVE",
@@ -283,9 +286,10 @@ async function transferStudent(data) {
 	});
 }
 
-async function removeStudentFromGroup(studentId, groupId) {
+async function removeStudentFromGroup(studentId, groupId, tenant_id) {
 	const result = await prisma.enrollments.updateMany({
-		where: {
+      where: {
+         tenant_id:tenant_id,
 			student_id: parseInt(studentId),
 			group_id: parseInt(groupId),
 			status: "ACTIVE",
@@ -296,7 +300,11 @@ async function removeStudentFromGroup(studentId, groupId) {
 		},
 	});
 
-	if (result.count === 0) throw { message: "O'quvchi bu guruhda topilmadi yoki allaqachon o'chirilgan", statusCode: 404 };
+	if (result.count === 0)
+		throw {
+			message: "O'quvchi bu guruhda topilmadi yoki allaqachon o'chirilgan",
+			statusCode: 404,
+		};
 
 	return { message: "Student muvaffaqiyatli guruhdan o'chirildi" };
 }

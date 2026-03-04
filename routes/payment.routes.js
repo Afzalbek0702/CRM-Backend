@@ -3,17 +3,29 @@ import * as paymentController from "../controller/payment.controller.js";
 import { requireRole } from "../middleware/roleMiddleware.js";
 const router = Router();
 
-router.get("/", paymentController.getAllPayments);
+router.get(
+	"/",
+	requireRole("CEO", "ADMIN", "MANAGER"),
+	paymentController.getAllPayments,
+);
 router.post(
 	"/",
-	requireRole("ADMIN", "MANAGER"),
+	requireRole("CEO", "ADMIN", "MANAGER"),
 	paymentController.createPayment,
 );
-router.get("/:id", paymentController.getPaymentById);
+router.get(
+	"/:id",
+	requireRole("CEO", "ADMIN", "MANAGER"),
+	paymentController.getPaymentById,
+);
 router.put(
 	"/:id",
-	requireRole("ADMIN", "MANAGER"),
+	requireRole("CEO", "ADMIN", "MANAGER"),
 	paymentController.updatePayment,
 );
-router.delete("/:id", requireRole("ADMIN"), paymentController.deletePayment);
+router.delete(
+	"/:id",
+	requireRole("CEO", "ADMIN"),
+	paymentController.deletePayment,
+);
 export default router;

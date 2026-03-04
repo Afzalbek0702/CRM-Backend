@@ -1,16 +1,17 @@
 import prisma from "../lib/prisma.js";
 
 async function create(data) {
-	const { full_name, phone, source, interested_course, comment } = data;
+	const { full_name, phone, source, interested_course, comment, tenant_id } =
+		data;
 	return await prisma.leads.create({
 		data: { full_name, phone, source, interested_course, comment },
 	});
-	
 }
 
-async function getAll() {
+async function getAll(tenant_id) {
 	return await prisma.leads.findMany({
 		where: {
+			tenant_id: tenant_id,
 			status: { not: "CONVERTED" },
 			status: { not: "DELETED" },
 		},
@@ -18,24 +19,24 @@ async function getAll() {
 	});
 }
 
-async function getById(id) {
+async function getById(id, tenant_id) {
 	return await prisma.leads.findUnique({
-		where: { id: parseInt(id) },
+		where: { tenant_id: tenant_id, id: parseInt(id) },
 	});
 }
 
 async function update(data) {
-	const { full_name, phone, id } = data;
+	const { full_name, phone, id, tenant_id } = data;
 	return await prisma.leads.update({
-		where: { id: parseInt(id) },
+		where: { tenant_id: tenant_id, id: parseInt(id) },
 		data: { full_name, phone },
 	});
 }
 
-async function convert(leadId, group_id) {
+async function convert(leadId, group_id, tenant_id) {
 	return await prisma.$transaction(async (tx) => {
 		const lead = await tx.leads.findUnique({
-			where: { id: parseInt(leadId) },
+			where: { tenant_id: tenant_id, id: parseInt(leadId) },
 		});
 
 		if (!lead) {
@@ -71,9 +72,9 @@ async function convert(leadId, group_id) {
 	});
 }
 
-async function deleteById(id) {
+async function deleteById(id, tenant_id) {
 	return await prisma.leads.update({
-		where: { id: parseInt(id) },
+		where: { tenant_id: tenant_id, id: parseInt(id) },
 		data: { status: "DELETED" },
 	});
 }

@@ -1,8 +1,9 @@
 import prisma from "../lib/prisma.js";
 
-async function getAll() {
+async function getAll(tenant_id) {
 	const payments = await prisma.payments.findMany({
 		where: {
+			tenant_id: tenant_id,
 			status: { not: "DELETED" },
 		},
 		include: {
@@ -26,43 +27,45 @@ async function getAll() {
 }
 
 async function create(data) {
-	const { student_id, group_id, amount, method, paid_month } = data;
+	const { student_id, group_id, amount, method, paid_month, tenant_id } = data;
 	return await prisma.payments.create({
 		data: {
 			student_id: parseInt(student_id),
 			group_id: parseInt(group_id),
 			amount: parseFloat(amount),
 			method,
+			tenant_id,
 			paid_month: new Date(paid_month),
 		},
 	});
 }
 
-async function getById(id) {
+async function getById(id, tenant_id) {
 	const payment = await prisma.payments.findUnique({
-		where: { id: parseInt(id) },
+		where: { tenant_id: tenant_id, id: parseInt(id) },
 	});
 	if (!payment) throw { message: "To'lov topilmadi", statusCode: 404 };
 	return payment;
 }
 
 async function update(id, data) {
-	const { student_id, group_id, amount, method, paid_month } = data;
+	const { student_id, group_id, amount, method, paid_month, tenant_id } = data;
 	return await prisma.payments.update({
-		where: { id: parseInt(id) },
+		where: { tenant_id: tenant_id, id: parseInt(id) },
 		data: {
 			student_id: parseInt(student_id),
 			group_id: parseInt(group_id),
 			amount: parseFloat(amount),
 			method,
+
 			paid_month: new Date(paid_month),
 		},
 	});
 }
 
-async function deleteById(id) {
+async function deleteById(id,tenant_id) {
 	return await prisma.payments.update({
-		where: { id: parseInt(id) },
+		where: {tenant_id:tenant_id, id: parseInt(id) },
 		data: {
 			status: "DELETED",
 			deleted_at: new Date(),

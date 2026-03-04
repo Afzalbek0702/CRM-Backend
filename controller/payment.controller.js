@@ -3,7 +3,7 @@ import { sendSuccess, sendError } from "../lib/response.js";
 
 export async function getAllPayments(req, res) {
 	try {
-		const payments = await paymentService.getAll();
+		const payments = await paymentService.getAll(req.tenantId);
 		sendSuccess(res, payments);
 	} catch (error) {
 		sendError(res, "Paymentsni olishda xatolik yuz berdi", 500, error);
@@ -25,17 +25,17 @@ export async function createPayment(req, res) {
 			amount,
 			method,
 			paid_month,
+			tenant_id: req.tenantId,
 		});
-		sendSuccess(res, newPayment,201);
+		sendSuccess(res, newPayment, 201);
 	} catch (error) {
 		sendError(res, "Payment yaratishda xatolik yuz berdi", 500, error);
 	}
 }
 export async function getPaymentById(req, res) {
-	if (!req.params.id)
-		return sendError(res, "ID topilmadi", 400);
+	if (!req.params.id) return sendError(res, "ID topilmadi", 400);
 	try {
-		const payment = await paymentService.getById(req.params.id);
+		const payment = await paymentService.getById(req.params.id, req.tenantId);
 		sendSuccess(res, payment);
 	} catch (error) {
 		sendError(
@@ -47,8 +47,7 @@ export async function getPaymentById(req, res) {
 	}
 }
 export async function updatePayment(req, res) {
-	if (!req.params.id)
-		return sendError(res, "ID topilmadi", 400);
+	if (!req.params.id) return sendError(res, "ID topilmadi", 400);
 	const { student_id, group_id, amount, type, paid_month } = req.body;
 	if (!student_id || !group_id || !amount || !type || !paid_month) {
 		return sendError(
@@ -64,6 +63,7 @@ export async function updatePayment(req, res) {
 			amount,
 			type,
 			paid_month,
+			tenant_id: req.tenantId,
 		});
 		sendSuccess(res, updatedPayment);
 	} catch (error) {
@@ -71,10 +71,9 @@ export async function updatePayment(req, res) {
 	}
 }
 export async function deletePayment(req, res) {
-	if (!req.params.id)
-		return sendError(res, "ID topilmadi", 400);
+	if (!req.params.id) return sendError(res, "ID topilmadi", 400);
 	try {
-		const remove = await paymentService.deleteById(req.params.id);
+		const remove = await paymentService.deleteById(req.params.id, req.tenantId);
 		sendSuccess(res, remove);
 	} catch (error) {
 		sendError(res, "To'lovni o'chirishda xatolik yuz berdi", 500, error);

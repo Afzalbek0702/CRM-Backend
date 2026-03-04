@@ -1,7 +1,7 @@
 import prisma from "../lib/prisma.js";
 import { parseLessonTime } from "../utils/time.js";
 
-async function MonthlyIncome(from, to) {
+async function MonthlyIncome(from, to, tenant_id) {
 	const adjustedTo =
 		to.slice(5, 10) === "02-31" ? to.slice(0, 5) + "02-28" : to;
 
@@ -10,6 +10,7 @@ async function MonthlyIncome(from, to) {
 		_sum: { amount: true },
 		where: {
 			status: "ACTIVE",
+			tenant_id: tenant_id,
 			paid_at: {
 				gte: new Date(`${from}T00:00:00Z`),
 				lte: new Date(`${adjustedTo}T23:59:59Z`),
@@ -24,13 +25,13 @@ async function MonthlyIncome(from, to) {
 	}));
 }
 
-async function TopDebtors(month) {
+async function TopDebtors(month, tenant_id) {
 	const startOfMonth = new Date(month);
 	const endOfMonth = new Date(startOfMonth);
 	endOfMonth.setMonth(endOfMonth.getMonth() + 1);
 
 	const students = await prisma.students.findMany({
-		where: { status: "ACTIVE" },
+		where: { status: "ACTIVE", tenant_id: tenant_id },
 		include: {
 			enrollments: {
 				where: { status: "ACTIVE" },
@@ -78,13 +79,17 @@ async function TopDebtors(month) {
 	return debts;
 }
 
-async function TodayLessons() {
+async function TodayLessons(tenant_id) {
 	const todayDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
 		new Date().getDay()
 	];
 
 	const lessons = await prisma.groups.findMany({
-		where: { status: "ACTIVE", lesson_days: { has: todayDay } },
+		where: {
+			tenant_id: tenant_id,
+			status: "ACTIVE",
+			lesson_days: { has: todayDay },
+		},
 		include: {
 			teachers: { select: { full_name: true } },
 			enrollments: { select: { student_id: true } },
@@ -103,7 +108,7 @@ async function TodayLessons() {
 	}));
 }
 
-async function AbsentStudents() {
+async function AbsentStudents(tenant_id) {
 	const todayDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
 		new Date().getDay()
 	];
@@ -116,6 +121,7 @@ async function AbsentStudents() {
 
 	const groups = await prisma.groups.findMany({
 		where: {
+			tenant_id: tenant_id,
 			status: "ACTIVE",
 			lesson_days: { has: todayDay },
 		},

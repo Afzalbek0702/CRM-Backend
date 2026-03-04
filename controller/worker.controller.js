@@ -3,7 +3,7 @@ import { sendError, sendSuccess } from "../lib/response.js";
 
 export async function getUsers(req, res) {
 	try {
-		const data = await workerService.getAll();
+		const data = await workerService.getAll(req.tenantId);
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(res, "Failed to retrieve users", 500, error);
@@ -27,7 +27,7 @@ export async function update(req, res) {
 			400,
 		);
 	try {
-	   const data = await workerService.update({
+		const data = await workerService.update({
 			full_name,
 			phone,
 			position,
@@ -36,6 +36,7 @@ export async function update(req, res) {
 			img,
 			id: req.params.id,
 			user_id,
+			tenant_id: req.tenantId,
 		});
 		sendSuccess(res, data);
 	} catch (error) {
@@ -47,7 +48,7 @@ export async function updateUserRole(req, res) {
 	const { id } = req.params;
 	const { role } = req.body;
 	try {
-		const data = await workerService.updateRole(id, role);
+		const data = await workerService.updateRole(id, role, req.tenantId);
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(res, "Failed to update user role", 500, error);
@@ -56,7 +57,7 @@ export async function updateUserRole(req, res) {
 export async function deleteUser(req, res) {
 	const { id } = req.params;
 	try {
-		const data = await workerService.deleteById(id);
+		const data = await workerService.deleteById(id, req.tenantId);
 		sendSuccess(res, data);
 	} catch (error) {
 		sendError(res, "Failed to delete user", 500, error);

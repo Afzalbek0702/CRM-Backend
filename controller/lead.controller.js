@@ -16,6 +16,7 @@ export async function createLead(req, res) {
 			source,
 			interested_course,
 			comment,
+			tenant_id: req.tenantId,
 		});
 		sendSuccess(res, leads, 201);
 	} catch (error) {
@@ -24,7 +25,7 @@ export async function createLead(req, res) {
 }
 export async function getLeads(req, res) {
 	try {
-		const leads = await leadsService.getAll();
+		const leads = await leadsService.getAll(req.tenantId);
 		sendSuccess(res, leads);
 	} catch (error) {
 		sendError(res, "Leadlarni olishda xatolik yuz berdi", 500, error);
@@ -33,7 +34,7 @@ export async function getLeads(req, res) {
 export async function getLeadById(req, res) {
 	if (!req.params.id) return sendError(res, "ID topilmadi!", 404);
 	try {
-		const lead = await leadsService.getById(req.params.id);
+		const lead = await leadsService.getById(req.params.id, req.tenantId);
 		sendSuccess(res, lead);
 	} catch (error) {
 		sendError(res, "Leadni olishda xatolik yuz berdi", 500, error);
@@ -49,10 +50,11 @@ export async function updateLead(req, res) {
 		);
 	if (!req.params.id) return sendError(res, "ID required!", 404);
 	try {
-	 const leads =	await leadsService.update({
+		const leads = await leadsService.update({
 			full_name,
 			phone,
 			id: req.params.id,
+			tenant_id: req.tenantId,
 		});
 		sendSuccess(res, leads);
 	} catch (error) {
@@ -68,7 +70,7 @@ export async function convertLeadToGroup(req, res) {
 	}
 
 	try {
-		const leads = await leadsService.convert(leadId, group_id);
+		const leads = await leadsService.convert(leadId, group_id, req.tenantId);
 		sendSuccess(res, leads);
 	} catch (err) {
 		sendError(res, "Conversion failed", 500, err);
@@ -77,7 +79,7 @@ export async function convertLeadToGroup(req, res) {
 export async function deleteLead(req, res) {
 	const leadId = req.params.id;
 	try {
-		const leads = await leadsService.deleteById(leadId);
+		const leads = await leadsService.deleteById(leadId, req.tenantId);
 		sendSuccess(res, leads);
 	} catch (error) {
 		sendError(res, "Failed to delete lead", 500, error);
