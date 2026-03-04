@@ -2,7 +2,7 @@ import prisma from "../lib/prisma.js";
 
 async function getAll(tenant_id) {
 	return await prisma.teachers.findMany({
-		where: { tenant_id: tenant_id, status: "DELETED" },
+		where: { tenant_id: tenant_id, status: "ACTIVE" },
 	});
 }
 
