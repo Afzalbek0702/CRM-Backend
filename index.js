@@ -5,6 +5,7 @@ import helmet from "helmet";
 import { fileURLToPath } from "url";
 import authRouter from "./routes/auth.routes.js";
 import apiRoutes from "./routes/api.routes.js";
+import superadminRouter from "./routes/superadmin.routes.js";
 import { authMiddleware } from "./middleware/authMiddleware.js";
 import { tenantMiddleware } from "./middleware/tenenatMiddleware.js";
 import cookieParser from "cookie-parser";
@@ -39,6 +40,7 @@ app.use(helmet());
 
 // Routes
 app.use("/auth", authRouter);
+app.use("/superadmin", superadminRouter)
 app.use(
 	"/:tenantName/api",
 	tenantMiddleware,

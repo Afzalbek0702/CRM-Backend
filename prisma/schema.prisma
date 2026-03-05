@@ -13,6 +13,7 @@ enum UserRole {
   MANAGER
   WORKER
   CEO
+  SUPERADMIN
 }
 
 enum Status {
@@ -189,7 +190,6 @@ model teachers {
 
 model users {
   id            Int       @id @default(autoincrement())
-  tenant_id   String
   phone         String    @unique @db.VarChar(20)
   password_hash String
   role          UserRole  @default(WORKER)
@@ -198,6 +198,8 @@ model users {
   
   worker        workers?
   expenses      expenses[]
+  tenant_id     String?
+  tenant        tenants? @relation(fields: [tenant_id], references: [id])
   @@map("users")
 }
 
@@ -227,4 +229,6 @@ model tenants {
   name       String    @db.VarChar(100)
   subdomain  String    @unique @db.VarChar(50)
   created_at DateTime  @default(now())
+
+  users      users[]
 }
