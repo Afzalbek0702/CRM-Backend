@@ -1,9 +1,10 @@
 import { Router } from "express";
 import * as roomController from "../controller/room.controller.js";
+import { requireRole } from "../middleware/roleMiddleware.js";
 const router = Router();
-router.get("/", roomController.getAll);
-router.get("/:id", roomController.getById);
-router.post("/", roomController.create);
-router.put("/", roomController.update);
-router.delete("/", roomController.deleteById);
+router.get("/",requireRole("CEO", "ADMIN", "MANAGER","TEACHER"), roomController.getAll);
+router.get("/:id",requireRole("CEO", "ADMIN", "MANAGER",), roomController.getById);
+router.post("/",requireRole("CEO", "ADMIN", "MANAGER"), roomController.create);
+router.put("/",requireRole("CEO", "ADMIN", "MANAGER",), roomController.update);
+router.delete("/",requireRole("CEO", "ADMIN", "MANAGER",), roomController.deleteById);
 export default router;

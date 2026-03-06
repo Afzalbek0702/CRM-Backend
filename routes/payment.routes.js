@@ -5,7 +5,7 @@ const router = Router();
 
 router.get(
 	"/",
-	requireRole("CEO", "ADMIN", "MANAGER"),
+	requireRole("CEO", "ADMIN", "MANAGER","TEACHER"),
 	paymentController.getAllPayments,
 );
 router.post(
