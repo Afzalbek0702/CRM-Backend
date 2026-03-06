@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as enrollmentController from "../controller/enrollment.controller.js";
+import { requireRole } from "../middleware/roleMiddleware.js";
 const router = Router();
 
 router.get(
