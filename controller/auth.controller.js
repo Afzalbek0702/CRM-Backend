@@ -56,7 +56,7 @@ export async function login(req, res) {
 			httpOnly: true,
 			secure: true,
 			sameSite: "none",
-         maxAge: 7 * 60 * 60 * 1000,
+			maxAge: 7 * 60 * 60 * 1000,
 		});
 		sendSuccess(res, data);
 	} catch (error) {
@@ -90,4 +90,8 @@ export async function changePassword(req, res) {
 			error,
 		);
 	}
+}
+
+export async function me(req, res) {
+	sendSuccess(res, { user: req.user, tenant: req.tenantId });
 }

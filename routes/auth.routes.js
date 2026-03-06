@@ -16,4 +16,5 @@ router.post(
 	requireRole("CEO", "ADMIN"),
 	authController.registerWorker,
 );
+router.get('/me', authController.me)
 export default router;
