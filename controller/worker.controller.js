@@ -51,7 +51,12 @@ export async function updateUserRole(req, res) {
 		const data = await workerService.updateRole(id, role, req.tenantId);
 		sendSuccess(res, data);
 	} catch (error) {
-		sendError(res, "Failed to update user role", 500, error);
+		sendError(
+			res,
+			error.message || "User role ni yangilashda xatolik yuz berdi",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }
 export async function deleteUser(req, res) {
@@ -60,6 +65,11 @@ export async function deleteUser(req, res) {
 		const data = await workerService.deleteById(id, req.tenantId);
 		sendSuccess(res, data);
 	} catch (error) {
-		sendError(res, "Failed to delete user", 500, error);
+		sendError(
+			res,
+			error.message || "Failed to delete user",
+			error.statusCode || 500,
+			error,
+		);
 	}
 }

@@ -47,7 +47,7 @@ async function registerWorker(data) {
 		const newWorker = await tx.workers.create({
 			data: {
 				user_id: newUser.id,
-				full_name: full_name || "Ism yo'q",
+				full_name: full_name,
 				phone: phone,
 				position: position,
 				salary: salary ? parseFloat(salary) : null,
