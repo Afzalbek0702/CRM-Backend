@@ -13,7 +13,8 @@ export async function registerWorker(req, res) {
 		salary_type,
 		role,
 	} = req.body;
-
+   const { tenant } = req.query
+   
 	if (!phone || !password || !full_name || !role) {
 		return sendError(
 			res,
@@ -33,7 +34,7 @@ export async function registerWorker(req, res) {
 			img,
 			salary_type,
 			role,
-			tenant_id: req.tenantId,
+			tenant,
 		});
 
 		sendSuccess(res, data, 201);

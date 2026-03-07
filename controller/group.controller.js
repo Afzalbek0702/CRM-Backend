@@ -35,7 +35,6 @@ export async function createGroup(req, res) {
 		);
 	}
 	try {
-		console.log(req.tenantId);
 
 		const newGroup = await groupService.create({
 			name,

@@ -13,9 +13,11 @@ async function registerWorker(data) {
 		img,
 		salary_type,
 		role,
-		tenant_id,
+		tenant,
 	} = data;
-
+	const tenantName = await prisma.tenants.findUnique({
+		where: { subdomain: tenant },
+	});
 	// 1. Telefon raqam borligini tekshirish
 	const existingUser = await prisma.users.findUnique({
 		where: { phone },
@@ -39,7 +41,7 @@ async function registerWorker(data) {
 				phone,
 				password_hash,
 				role: role || "WORKER",
-				tenant_id,
+				tenant_id: tenantName.id,
 			},
 		});
 
@@ -54,7 +56,7 @@ async function registerWorker(data) {
 				salary_type: salary_type || "CASH",
 				birthday: birthday === null ? new Date(birthday) : null,
 				img: img || null,
-				tenant_id,
+				tenant_id: tenantName.id,
 			},
 		});
 
@@ -66,7 +68,7 @@ async function registerWorker(data) {
 					workerId: newWorker.id,
 					full_name: newWorker.full_name,
 					phone: newWorker.phone,
-					tenant_id,
+					tenant_id:tenantName.id,
 				},
 			});
 		}
@@ -77,7 +79,7 @@ async function registerWorker(data) {
 }
 async function login(phone, password, tenant_id) {
 	const user = await prisma.users.findUnique({
-		where: { phone, tenant_id },
+		where: { phone },
 		include: {
 			worker: {
 				include: {
@@ -89,6 +91,7 @@ async function login(phone, password, tenant_id) {
 	const tenant = await prisma.tenants.findUnique({
 		where: { id: user.tenant_id },
 	});
+
 	if (!user)
 		throw {
 			message: "Foydalanuvchi topilmadi",
@@ -152,8 +155,8 @@ async function login(phone, password, tenant_id) {
 
 	// 7. Muaffaqiyatli javob
 	return {
-      token,
-      tenant:tenant.subdomain,
+		token,
+		tenant: tenant.subdomain,
 		user: userData,
 		// profile: profileData,
 	};

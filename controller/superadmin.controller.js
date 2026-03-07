@@ -3,7 +3,6 @@ import bcrypt from "bcrypt";
 export async function create(req, res) {
 	const { password, phone, name, subdomain, adminPhone, adminPassword } =
 		req.body;
-	console.log(password, phone, name, subdomain, adminPhone, adminPassword);
 
 	if (
 		phone == "998905423747" ||
