@@ -18,4 +18,5 @@ router.post(
 	authController.registerWorker,
 );
 router.get("/me", authMiddleware, authController.me);
+router.get("/logout", authMiddleware, authController.logout);
 export default router;

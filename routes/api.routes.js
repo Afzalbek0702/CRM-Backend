@@ -24,7 +24,7 @@ router.use("/leads", requireRole("CEO", "ADMIN", "MANAGER"), leadsRoutes);
 router.use("/expense", requireRole("CEO", "ADMIN", "MANAGER"), expenseRoutes);
 
 router.use("/worker", requireRole("CEO", "ADMIN"), workerRoutes);
-router.use("/archive", requireRole("CEO", "ADMIN"), archiveRoutes);
+router.use("/archive", requireRole("CEO"), archiveRoutes);
 router.use("/salary", requireRole("CEO", "ADMIN"), salaryRouters);
 
 router.use("/teachers", teachersRouter);

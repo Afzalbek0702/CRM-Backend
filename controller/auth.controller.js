@@ -13,8 +13,8 @@ export async function registerWorker(req, res) {
 		salary_type,
 		role,
 	} = req.body;
-   const { tenant } = req.query
-   
+	const { tenant } = req.query;
+
 	if (!phone || !password || !full_name || !role) {
 		return sendError(
 			res,
@@ -95,4 +95,13 @@ export async function changePassword(req, res) {
 
 export async function me(req, res) {
 	sendSuccess(res, { user: req.user, tenant: req.tenantId });
+}
+
+export async function logout(req, res) {
+	res.clearCookie("token", {
+		httpOnly: true,
+		secure: true,
+		sameSite: "none",
+	});
+	res.status(200).json({ message: "Logged out" });
 }
