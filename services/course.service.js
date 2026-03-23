@@ -30,7 +30,7 @@ async function update(data) {
 	});
 }
 
-async function deleteById(id) {
+async function deleteById(id,tenant_id) {
 	return await prisma.courses.update({
 		where: { id: parseInt(id), tenant_id },
 		data: { status: "DELETED" },

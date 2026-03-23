@@ -6,5 +6,5 @@ router.get("/",requireRole("CEO", "ADMIN", "MANAGER","TEACHER"), roomController.
 router.get("/:id",requireRole("CEO", "ADMIN", "MANAGER",), roomController.getById);
 router.post("/",requireRole("CEO", "ADMIN", "MANAGER"), roomController.create);
 router.put("/",requireRole("CEO", "ADMIN", "MANAGER",), roomController.update);
-router.delete("/",requireRole("CEO", "ADMIN", "MANAGER",), roomController.deleteById);
+router.delete("/:id",requireRole("CEO", "ADMIN", "MANAGER",), roomController.deleteById);
 export default router;
