@@ -51,6 +51,6 @@ export async function deleteById(req, res) {
 		const data = await roomService.deleteById(req.params.id, req.tenantId);
 		sendSuccess(res, data);
 	} catch (error) {
-		sendError(res, "Xonani o'chirishda xatolik yuz berdi");
+		sendError(res, "Xonani o'chirishda xatolik yuz berdi",500,error);
 	}
 }

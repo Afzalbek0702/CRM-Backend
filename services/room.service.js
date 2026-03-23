@@ -3,24 +3,24 @@ import prisma from "../lib/prisma.js";
 async function get(tenant_id) {
 	const today = new Date().toLocaleDateString("en-US", { weekday: "short" });
 
-   const rooms = await prisma.rooms.findMany({
-			where: { tenant_id: tenant_id, status: "ACTIVE" },
-			include: {
-				groups: {
-					where: {
-						lesson_days: {
-							has: today,
-						},
-					},
-					orderBy: {
-						lesson_time: "asc",
+	const rooms = await prisma.rooms.findMany({
+		where: { tenant_id: tenant_id, status: "ACTIVE" },
+		include: {
+			groups: {
+				where: {
+					lesson_days: {
+						has: today,
 					},
 				},
+				orderBy: {
+					lesson_time: "asc",
+				},
 			},
-			orderBy: {
-				name: "asc",
-			},
-		});
+		},
+		orderBy: {
+			name: "asc",
+		},
+	});
 
 	return rooms.flatMap((r) => {
 		const groupsToProcess = r.groups.length > 0 ? r.groups : [null];
@@ -41,7 +41,7 @@ async function getById(id, tenant_id) {
 	const today = new Date().toLocaleDateString("en-US", { weekday: "short" });
 
 	const r = await prisma.rooms.findUnique({
-		where: {tenant_id:tenant_id, id: parseInt(id) },
+		where: { tenant_id: tenant_id, id: parseInt(id) },
 		include: {
 			groups: {
 				where: {
@@ -84,7 +84,7 @@ async function create(name, capacity, tenant_id) {
 
 async function update(name, capacity, id, tenant_id) {
 	const updatedRoom = await prisma.rooms.update({
-		where: {tenant_id:tenant_id, id: parseInt(id) },
+		where: { tenant_id: tenant_id, id: parseInt(id) },
 		data: { name, capacity: parseInt(capacity) },
 	});
 	return [updatedRoom];
@@ -92,8 +92,8 @@ async function update(name, capacity, id, tenant_id) {
 
 async function deleteById(id, tenant_id) {
 	const archivedRoom = await prisma.rooms.update({
-		where: {tenant_id:tenant_id, id: parseInt(id) },
-		data: { status: "ARCHIVE" },
+		where: { tenant_id: tenant_id, id: parseInt(id) },
+		data: { status: "ARCHIVED" },
 	});
 	return [archivedRoom];
 }
