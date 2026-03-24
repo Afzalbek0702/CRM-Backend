@@ -4,7 +4,7 @@ async function create(data) {
 	const { full_name, phone, source, interested_course, comment, tenant_id } =
 		data;
 	return await prisma.leads.create({
-		data: { full_name, phone, source, interested_course, comment },
+		data: { full_name, phone, source, interested_course, comment, tenant_id },
 	});
 }
 
@@ -47,7 +47,8 @@ async function convert(leadId, group_id, tenant_id) {
 			data: {
 				full_name: lead.full_name,
 				phone: lead.phone,
-				status: "ACTIVE",
+            status: "ACTIVE",
+            tenant_id: tenant_id
 			},
 		});
 
@@ -56,7 +57,8 @@ async function convert(leadId, group_id, tenant_id) {
 				student_id: student.id,
 				group_id: parseInt(group_id),
 				status: "ACTIVE",
-				joined_at: new Date(),
+            joined_at: new Date(),
+            tenant_id: tenant_id
 			},
 		});
 

@@ -35,6 +35,8 @@ async function getStudentsInGroup(groupId, tenant_id) {
 }
 
 async function set(data) {
+   console.log(data);
+   
 	return await prisma.attendance.upsert({
 		where: {
 			tenant_id: data.tenant_id,

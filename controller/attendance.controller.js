@@ -82,25 +82,37 @@ export async function getAttendance(req, res) {
 }
 
 export async function setAttendance(req, res) {
-	const { group_id, student_id, lesson_date, status } = req.body;
-	if (!group_id || !student_id || !lesson_date || status === undefined)
-		sendError(
-			res,
-			"Barcha maydonlar to'ldirilishi kerak! group_id, student_id, lesson_date, status",
-			400,
-		);
+	const data = req.body;
 
 	try {
-		// Service ichidagi upsert mantiqi ishlaydi
-		const data = await attendanceService.set({
+		// 1. Agar massiv kelsa (Ommaviy saqlash)
+		if (Array.isArray(data)) {
+			const results = await Promise.all(
+				data.map((item) =>
+					attendanceService.set({
+						...item,
+						tenant_id: req.tenantId,
+					}),
+				),
+			);
+			return sendSuccess(res, results, 200);
+		}
+
+		// 2. Agar bitta ob'ekt kelsa (Eski usul)
+		const { group_id, student_id, lesson_date, status } = data;
+		if (!group_id || !student_id || !lesson_date || status === undefined) {
+			return sendError(res, "Parametrlar yetarli emas", 400);
+		}
+
+		const result = await attendanceService.set({
 			group_id,
 			student_id,
 			lesson_date,
 			status,
 			tenant_id: req.tenantId,
 		});
-		sendSuccess(res, data);
+		sendSuccess(res, result);
 	} catch (error) {
-		sendError(res, "Server xatosi", 500, error);
+		sendError(res, "Server xatosi", 500, error.message);
 	}
 }
