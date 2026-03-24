@@ -153,7 +153,8 @@ async function create(data) {
 			phone: data.phone,
 			birthday: data.birthday ? new Date(data.birthday) : null,
 			parents_name: data.parents_name,
-			parents_phone: data.parents_phone,
+         parents_phone: data.parents_phone,
+         tenant_id:data.tenant_id
 		},
 	});
 }

@@ -1,7 +1,25 @@
 import prisma from "../lib/prisma.js";
 
 async function getAll(tenant_id) {
-	return await prisma.workers.findMany({ where: { tenant_id: tenant_id } });
+	const workers = await prisma.workers.findMany({
+		where: {
+			tenant_id: tenant_id,
+		},
+		include: {
+			user: {
+				select: {
+					role: true,
+				},
+			},
+		},
+	});
+
+	
+	return workers.map((worker) => ({
+		...worker,
+		role: worker.user.role, 
+		user: undefined, 
+	}));
 }
 
 async function updateRole(id, role, tenant_id) {
