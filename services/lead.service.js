@@ -12,8 +12,7 @@ async function getAll(tenant_id) {
 	return await prisma.leads.findMany({
 		where: {
 			tenant_id: tenant_id,
-			status: { not: "CONVERTED" },
-			status: { not: "DELETED" },
+			status: { notIn: ["CONVERTED", "DELETED"] },
 		},
 		orderBy: { created_at: "desc" },
 	});
@@ -119,4 +118,12 @@ async function convertToStudent(leadId, tenant_id) {
 	});
 }
 
-export default { create, getAll, getById, update, convertToGroup, deleteById,convertToStudent };
+export default {
+	create,
+	getAll,
+	getById,
+	update,
+	convertToGroup,
+	deleteById,
+	convertToStudent,
+};
