@@ -70,7 +70,7 @@ export async function convertLeadToGroup(req, res) {
 	}
 
 	try {
-		const leads = await leadsService.convert(leadId, group_id, req.tenantId);
+		const leads = await leadsService.convertToGroup(leadId, group_id, req.tenantId);
 		sendSuccess(res, leads);
 	} catch (err) {
 		sendError(res, "Conversion failed", 500, err);
@@ -83,5 +83,16 @@ export async function deleteLead(req, res) {
 		sendSuccess(res, leads);
 	} catch (error) {
 		sendError(res, "Failed to delete lead", 500, error);
+	}
+}
+
+export async function convertLeadToStudent(req, res) {
+	const leadId = req.params.id;
+
+	try {
+		const result = await leadsService.convertToStudent(leadId, req.tenantId);
+		sendSuccess(res, result, "Lead muvaffaqiyatli talabaga aylantirildi");
+	} catch (err) {
+		sendError(res, "Conversion failed", 500, err.message);
 	}
 }

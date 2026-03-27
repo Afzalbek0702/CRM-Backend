@@ -37,43 +37,58 @@ export async function getAttendance(req, res) {
 			typeof d === "string" ? dayNameToNumber[d] : d,
 		);
 
-		const attendanceData = students.map((student) => {
-			const studentDays = [];
-			const lastDay = new Date(year, mon, 0).getDate();
+	const attendanceData = students.map((student) => {
+		const studentDays = [];
+		const lastDay = new Date(year, mon, 0).getDate();
 
-			for (let day = 1; day <= lastDay; day++) {
-				const dateObj = new Date(year, mon - 1, day);
-				const dayOfWeek = dateObj.getDay(); // 0 (Sun) - 6 (Sat)
+		// O'quvchining guruhga qo'shilgan sanasi
+		const rawJoinedAt = student.enrollments[0]?.joined_at;
+		const joinDate = rawJoinedAt ? new Date(rawJoinedAt) : null;
+		if (joinDate) joinDate.setHours(0, 0, 0, 0);
 
-				const isoDay = dayOfWeek === 0 ? 7 : dayOfWeek;
-				const isLessonDay =
-					numericLessonDays.includes(dayOfWeek) ||
-					numericLessonDays.includes(isoDay);
+		for (let day = 1; day <= lastDay; day++) {
+			const dateObj = new Date(year, mon - 1, day);
+			const dayOfWeek = dateObj.getDay();
+			const isoDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+			const isLessonDay =
+				numericLessonDays.includes(dayOfWeek) ||
+				numericLessonDays.includes(isoDay);
 
-				if (isLessonDay) {
-					const dateStr = `${month}-${day.toString().padStart(2, "0")}`;
+			if (isLessonDay) {
+				const dateStr = `${month}-${day.toString().padStart(2, "0")}`;
 
-					// Bazadan olingan massivdan qidiramiz (Tsikl ichida so'rov yo'q!)
+				// 1. O'quvchi qo'shilgan sanadan oldingi kunmi?
+				const isBeforeJoined = joinDate && dateObj < joinDate;
+
+				let currentStatus = null;
+
+				if (isBeforeJoined) {
+					// Hali guruhda bo'lmagan davri uchun maxsus status
+					currentStatus = "NOT_ENROLLED";
+				} else {
+					// Bazadan davomatni qidiramiz
 					const record = allAttendance.find(
 						(a) =>
 							a.student_id === student.id &&
 							a.lesson_date.toISOString().split("T")[0] === dateStr,
 					);
-
-					studentDays.push({
-						date: dateStr,
-						isLessonDay,
-						status: record ? record.status : null,
-					});
+					currentStatus = record ? record.status : null;
 				}
-			}
 
-			return {
-				student_id: student.id,
-				full_name: student.full_name,
-				days: studentDays,
-			};
-		});
+				studentDays.push({
+					date: dateStr,
+					isLessonDay,
+					status: currentStatus,
+				});
+			}
+		}
+
+		return {
+			student_id: student.id,
+			full_name: student.full_name,
+			days: studentDays,
+		};
+	});
 
 		sendSuccess(res, attendanceData);
 	} catch (err) {

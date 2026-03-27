@@ -33,7 +33,7 @@ async function update(data) {
 	});
 }
 
-async function convert(leadId, group_id, tenant_id) {
+async function convertToGroup(leadId, group_id, tenant_id) {
 	return await prisma.$transaction(async (tx) => {
 		const lead = await tx.leads.findUnique({
 			where: { tenant_id: tenant_id, id: parseInt(leadId) },
@@ -47,8 +47,8 @@ async function convert(leadId, group_id, tenant_id) {
 			data: {
 				full_name: lead.full_name,
 				phone: lead.phone,
-            status: "ACTIVE",
-            tenant_id: tenant_id
+				status: "ACTIVE",
+				tenant_id: tenant_id,
 			},
 		});
 
@@ -57,8 +57,8 @@ async function convert(leadId, group_id, tenant_id) {
 				student_id: student.id,
 				group_id: parseInt(group_id),
 				status: "ACTIVE",
-            joined_at: new Date(),
-            tenant_id: tenant_id
+				joined_at: new Date(),
+				tenant_id: tenant_id,
 			},
 		});
 
@@ -81,4 +81,42 @@ async function deleteById(id, tenant_id) {
 	});
 }
 
-export default { create, getAll, getById, update, convert, deleteById };
+async function convertToStudent(leadId, tenant_id) {
+	return await prisma.$transaction(async (tx) => {
+		// 1. Leadni qidirib topish
+		const lead = await tx.leads.findUnique({
+			where: {
+				id: parseInt(leadId),
+				tenant_id: tenant_id,
+			},
+		});
+
+		if (!lead) {
+			throw new Error("Lead topilmadi");
+		}
+
+		// 2. Talaba yaratish (Guruhsiz)
+		const student = await tx.students.create({
+			data: {
+				full_name: lead.full_name,
+				phone: lead.phone,
+				status: "ACTIVE", // Yoki "PENDING" qilish ham mumkin
+				tenant_id: tenant_id,
+				// Agar bazada created_at bo'lsa, avtomatik Date.now() bo'ladi
+			},
+		});
+
+		// 3. Lead statusini o'zgartirish
+		await tx.leads.update({
+			where: { id: parseInt(leadId) },
+			data: {
+				status: "CONVERTED",
+				updated_at: new Date(),
+			},
+		});
+
+		return { student_id: student.id };
+	});
+}
+
+export default { create, getAll, getById, update, convertToGroup, deleteById,convertToStudent };

@@ -22,14 +22,22 @@ async function getGroupDetails(groupId, tenant_id) {
 
 async function getStudentsInGroup(groupId, tenant_id) {
 	return await prisma.students.findMany({
-      where: {
-         tenant_id: tenant_id,
+		where: {
+			tenant_id: tenant_id,
 			status: "ACTIVE",
 			enrollments: {
 				some: { group_id: parseInt(groupId), status: "ACTIVE" },
 			},
 		},
-		select: { id: true, full_name: true },
+		select: {
+			id: true,
+			full_name: true,
+			// Enrollments ichidan aynan shu guruhga tegishli joined_at ni olamiz
+			enrollments: {
+				where: { group_id: parseInt(groupId) },
+				select: { joined_at: true },
+			},
+		},
 		orderBy: { full_name: "asc" },
 	});
 }
