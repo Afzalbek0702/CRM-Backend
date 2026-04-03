@@ -63,7 +63,7 @@ export async function login(req, res) {
 	} catch (error) {
 		sendError(
 			res,
-			error.message || "Server xatosi",
+			error.message || "Login Serverda xato",
 			error.statusCode || 500,
 			error,
 		);
@@ -86,7 +86,7 @@ export async function changePassword(req, res) {
 	} catch (error) {
 		sendError(
 			res,
-			error.message || "Server xatosi",
+			error.message || "Serverda xato",
 			error.statusCode || 500,
 			error,
 		);

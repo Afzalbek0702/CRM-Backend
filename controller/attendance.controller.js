@@ -92,7 +92,7 @@ export async function getAttendance(req, res) {
 
 		sendSuccess(res, attendanceData);
 	} catch (err) {
-		sendError(res, "Server xatosi", 500, err.message);
+		sendError(res, "Server xatosi", 500, err);
 	}
 }
 

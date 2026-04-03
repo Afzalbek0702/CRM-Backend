@@ -14,7 +14,7 @@ export async function create(req, res) {
 	if (!description || !amount || !method || !created_by)
 		return sendError(
 			res,
-			"Barcha maydonlar to'la bo'lishi shart! description, amount, method, created_by",
+			"Barcha maydonlar to'la bo'lishi shart!",
 		);
 	try {
 		const data = await expensesService.create({
@@ -34,7 +34,7 @@ export async function update(req, res) {
 	if (!description || !amount || !method || !created_by || !req.params.id)
 		return sendError(
 			res,
-			"Barcha maydonlar to'la bo'lishi shart! description, amount, method, created_by, id",
+			"Barcha maydonlar to'la bo'lishi shart!",
 		);
 	try {
 		const data = await expensesService.update({

@@ -14,7 +14,7 @@ export async function create(req, res) {
 	if (!name || !price || !lesson_count)
 		return sendError(
 			res,
-			"Barcha maydonlar to'la bo'lishi kerak! name, price, lesson_count",
+			"Barcha maydonlar to'la bo'lishi kerak!",
 			400,
 		);
 	try {
@@ -34,7 +34,7 @@ export async function update(req, res) {
 	if (!name || !price || !lesson_count || !req.params.id)
 		return sendError(
 			res,
-			"Barcha maydonlar to'la bo'lishi kerak! name, price, lesson_count, id",
+			"Barcha maydonlar to'la bo'lishi kerak!",
 			400,
 		);
 	try {
@@ -56,6 +56,6 @@ export async function deleteById(req, res) {
 		const data = await courseService.deleteById(req.params.id, req.tenantId);
 		sendSuccess(res, data);
 	} catch (error) {
-		sendError(res, "Kurslarni yangilashda xatolik yus berdi", 500, error);
+		sendError(res, "Kursni o'chirishda xatolik yus berdi", 500, error);
 	}
 }

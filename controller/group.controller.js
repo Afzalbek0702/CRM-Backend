@@ -30,7 +30,7 @@ export async function createGroup(req, res) {
 	) {
 		return sendError(
 			res,
-			"Barcha maydonlar to'ldirilishi kerak! name, course_type, price, lesson_time,	lesson_days, teacher_id,room_id,",
+			"Barcha maydonlar to'ldirilishi kerak!",
 			400,
 		);
 	}
@@ -95,7 +95,7 @@ export async function updateGroup(req, res) {
 	) {
 		return sendError(
 			res,
-			"Barcha maydonlar to'ldirilishi kerak! name, course_type, price, lesson_time,	lesson_days, teacher_id, room_id",
+			"Barcha maydonlar to'ldirilishi kerak!",
 			400,
 		);
 	}

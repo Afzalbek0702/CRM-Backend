@@ -28,15 +28,30 @@ async function getAll(tenant_id) {
 
 async function create(data) {
 	const { student_id, group_id, amount, method, paid_month, tenant_id } = data;
-	return await prisma.payments.create({
-		data: {
-			student_id: parseInt(student_id),
-			group_id: parseInt(group_id),
-			amount: parseFloat(amount),
-			method,
-			tenant_id,
-			paid_month: new Date(paid_month),
-		},
+	const sId = parseInt(student_id);
+	const gId = parseInt(group_id);
+	const amt = parseFloat(amount);
+
+	return await prisma.$transaction(async (tx) => {
+		const payment = await tx.payment.create({
+			data: {
+				student_id: sId,
+				group_id: gId,
+				amount: amt,
+				method,
+				tenant_id,
+				paid_month: new Date(paid_month),
+			},
+		});
+
+		await tx.student.update({
+			where: { id: sId },
+			data: {
+				balance: { increment: amt },
+			},
+		});
+
+		return payment;
 	});
 }
 

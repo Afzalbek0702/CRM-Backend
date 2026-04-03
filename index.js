@@ -9,11 +9,12 @@ import superadminRouter from "./routes/superadmin.routes.js";
 import { authMiddleware } from "./middleware/authMiddleware.js";
 import { tenantMiddleware } from "./middleware/tenenatMiddleware.js";
 import cookieParser from "cookie-parser";
+// Cron-ni bu yerdan olib tashlasangiz ham bo'ladi, chunki Vercel-da u barqaror emas
+import { chargeMonthlyFees } from "./services/billing.service.js";
 
-// Initialize Express app
 const app = express();
 
-// Middleware;
+// Middleware
 app.use(express.json());
 app.use(cookieParser());
 app.use(
@@ -23,7 +24,6 @@ app.use(
 				"http://localhost:5173",
 				"https://data-space-crm.vercel.app",
 			];
-
 			if (!origin || allowedOrigins.includes(origin)) {
 				callback(null, true);
 			} else {
@@ -38,25 +38,45 @@ app.use(
 );
 app.use(helmet());
 
-// Routes
+// 1. CRON Endpoint (Xavfsizlik uchun barcha middleware-lardan tepaga qo'yamiz)
+app.get("/api/billing/charge-monthly", async (req, res) => {
+	const authHeader = req.headers["authorization"];
+
+	// Vercel Cron yuboradigan Bearer tokenini tekshirish
+	if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+		return res.status(401).json({ error: "Ruxsat berilmagan" });
+	}
+
+	try {
+		const result = await chargeMonthlyFees();
+		res.status(200).json({
+			success: true,
+			message: "To'lovlar muvaffaqiyatli hisoblandi",
+			details: result,
+		});
+	} catch (error) {
+		console.error("Billing Error:", error);
+		res.status(500).json({ error: "Server xatoligi", message: error.message });
+	}
+});
+
+// 2. Oddiy yo'nalishlar
 app.use("/auth", authRouter);
-app.use("/superadmin", superadminRouter)
-app.use(
-	"/:tenantName/api",
-	tenantMiddleware,
-	authMiddleware,
-	apiRoutes,
-);
+app.use("/superadmin", superadminRouter);
+
+// 3. Tenant-ga asoslangan API yo'nalishlari
+app.use("/:tenantName/api", tenantMiddleware, authMiddleware, apiRoutes);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Root endpoint
 app.get("/", (req, res) => {
 	res.sendFile(path.join(__dirname, "view", "index.html"));
 });
 
-// Start the server
 const PORT = process.env.PORT || 7000;
-console.log("Server is running on", PORT);
-app.listen(PORT);
+app.listen(PORT, () => {
+	console.log("Server is running on", PORT);
+});
+
+export default app; // Vercel uchun kerak
