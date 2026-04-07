@@ -170,6 +170,7 @@ model students {
   parents_name  String?       @db.VarChar(50)
   deleted_at    DateTime?     @db.Timestamp(6)
   parents_phone String?       @db.VarChar(20)
+  last_billed_at DateTime?
   attendance    attendance[]
   enrollments   enrollments[]
   payments      payments[]

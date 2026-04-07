@@ -3,35 +3,54 @@ const now = new Date();
 const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-async function getAll(tenant_id) {
-	const students = await prisma.students.findMany({
-      where: {
-         tenant_id:tenant_id,
-			status: {
-				not: "DELETED",
-			},
+async function getAll(tenant_id, user) {
+	// 1. Asosiy filtr obyektini yaratamiz
+	const where = {
+		tenant_id: tenant_id,
+		status: {
+			not: "DELETED",
 		},
+	};
+
+	// 2. Agar foydalanuvchi O'QITUVCHI bo'lsa, mantiqiy filtr qo'shamiz
+	if (user.role === "TEACHER") {
+		where.enrollments = {
+			some: {
+				status: "ACTIVE",
+				groups: {
+					teacher_id: user.teacher_id, // Faqat o'ziga biriktirilgan guruhlar
+				},
+			},
+		};
+	}
+
+	// 3. Prisma orqali ma'lumotlarni olamiz
+	const students = await prisma.students.findMany({
+		where: where,
 		include: {
 			enrollments: {
 				where: {
 					status: "ACTIVE",
+					// Include ichida ham o'qituvchi filtrini saqlaymiz
+					...(user.role === "TEACHER" && {
+						groups: {
+							teacher_id: user.teacher_id,
+						},
+					}),
 				},
-				orderBy: {
-					joined_at: "desc",
-				},
+				orderBy: { joined_at: "desc" },
 				take: 1,
 				include: {
 					groups: {
-						select: {
-							id: true,
-							name: true,
-						},
+						select: { id: true, name: true },
 					},
 				},
 			},
 		},
 		orderBy: { full_name: "asc" },
 	});
+
+	// 4. To'lovlarni hisoblash (Faqat filtrlangan o'quvchilar uchun)
 	const payments = await prisma.payments.groupBy({
 		by: ["student_id"],
 		where: {
@@ -39,38 +58,37 @@ async function getAll(tenant_id) {
 				gte: monthStart,
 				lt: monthEnd,
 			},
+			student_id: { in: students.map((s) => s.id) },
 		},
-		_sum: {
-			amount: true,
-		},
-		_max: {
-			paid_at: true,
-		},
+		_sum: { amount: true },
+		_max: { paid_at: true },
 	});
-	const paymentMap = new Map();
 
+	const paymentMap = new Map();
 	for (const p of payments) {
 		paymentMap.set(p.student_id, {
 			monthly_paid: Number(p._sum.amount ?? 0),
 			last_monthly_payment: p._max.paid_at,
 		});
 	}
-	const result = students.map((student) => {
+
+	// 5. Natijani shakllantirish
+	return students.map((student) => {
 		const payment = paymentMap.get(student.id) ?? {
 			monthly_paid: 0,
 			last_monthly_payment: null,
 		};
-		const enrollment = student.enrollments[0]; // faqat birinchi
+		const enrollment = student.enrollments[0];
+
 		return {
 			id: student.id,
 			full_name: student.full_name,
 			phone: student.phone,
 			status: student.status,
-         balance: student.balance,
-         birthday: student.birthday,
+			balance: student.balance,
+			birthday: student.birthday,
 			parents_name: student.parents_name,
 			parents_phone: student.parents_phone,
-			deleted_at: student.deleted_at,
 			groups: enrollment
 				? { id: enrollment.groups.id, name: enrollment.groups.name }
 				: null,
@@ -78,7 +96,6 @@ async function getAll(tenant_id) {
 			last_monthly_payment: payment.last_monthly_payment,
 		};
 	});
-	return result;
 }
 async function getById(id, tenant_id) {
 	const student = await prisma.students.findUnique({

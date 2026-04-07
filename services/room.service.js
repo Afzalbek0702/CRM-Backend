@@ -1,40 +1,67 @@
 import prisma from "../lib/prisma.js";
 
 async function get(tenant_id) {
-	const today = new Date().toLocaleDateString("en-US", { weekday: "short" });
+	const now = new Date();
+	// Bugun haftaning qaysi kuni (Mon, Tue, Wed...)
+	const today = now.toLocaleDateString("en-US", { weekday: "short" });
+	// Hozirgi soat va daqiqa (HH:mm formatida, masalan "14:30")
+	const currentTime =
+		now.getHours().toString().padStart(2, "0") +
+		":" +
+		now.getMinutes().toString().padStart(2, "0");
 
-	const rooms = await prisma.rooms.findMany({
-		where: { tenant_id: tenant_id, status: "ACTIVE" },
-		include: {
-			groups: {
-				where: {
-					lesson_days: {
-						has: today,
+	try {
+		const rooms = await prisma.rooms.findMany({
+			where: {
+				tenant_id: tenant_id,
+				status: "ACTIVE",
+			},
+			include: {
+				groups: {
+					where: {
+						lesson_days: { has: today },
+						status: "ACTIVE",
 					},
-				},
-				orderBy: {
-					lesson_time: "asc",
+					orderBy: { lesson_time: "asc" },
 				},
 			},
-		},
-		orderBy: {
-			name: "asc",
-		},
-	});
+		});
 
-	return rooms.flatMap((r) => {
-		const groupsToProcess = r.groups.length > 0 ? r.groups : [null];
-		return groupsToProcess.map((g) => ({
-			room_id: r.id,
-			room_name: r.name,
-			capacity: r.capacity,
-			status: r.status,
-			group_name: g?.name ?? null,
-			group_id: g?.id ?? null,
-			group_lesson_time: g?.lesson_time ?? null,
-			group_lesson_days: g?.lesson_days ?? null,
-		}));
-	});
+		return rooms.map((room) => {
+			const todayGroups = room.groups;
+
+			const currentLesson = todayGroups.find((g) => {
+				const lessonStart = g.lesson_time;
+				const [h, m] = lessonStart.split(":").map(Number);
+				const startMinutes = h * 60 + m;
+				const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+				return nowMinutes >= startMinutes && nowMinutes < startMinutes + 90;
+         });
+
+			const nextLesson = todayGroups.find((g) => g.lesson_time > currentTime);
+
+			return {
+				room_id: room.id,
+				room_name: room.name,
+				capacity: room.capacity,
+				today_lessons_count: todayGroups.length,
+				is_currently_busy: !!currentLesson,
+				current_group: currentLesson ? currentLesson.name : null,
+				next_lesson_time: nextLesson
+					? nextLesson.lesson_time
+					: "Bugun boshqa dars yo'q",
+				daily_schedule: todayGroups.map((g) => ({
+					group_id: g.id,
+					group_name: g.name,
+					time: g.lesson_time,
+				})),
+			};
+		});
+	} catch (error) {
+		console.error("Room Status Error:", error);
+		throw error;
+	}
 }
 
 async function getById(id, tenant_id) {

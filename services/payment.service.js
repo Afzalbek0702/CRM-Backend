@@ -31,9 +31,9 @@ async function create(data) {
 	const sId = parseInt(student_id);
 	const gId = parseInt(group_id);
 	const amt = parseFloat(amount);
-
+   
 	return await prisma.$transaction(async (tx) => {
-		const payment = await tx.payment.create({
+		const payment = await tx.payments.create({
 			data: {
 				student_id: sId,
 				group_id: gId,
@@ -44,7 +44,7 @@ async function create(data) {
 			},
 		});
 
-		await tx.student.update({
+		await tx.students.update({
 			where: { id: sId },
 			data: {
 				balance: { increment: amt },

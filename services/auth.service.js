@@ -68,7 +68,7 @@ async function registerWorker(data) {
 					workerId: newWorker.id,
 					full_name: newWorker.full_name,
 					phone: newWorker.phone,
-					tenant_id:tenantName.id,
+					tenant_id: tenantName.id,
 				},
 			});
 		}
@@ -78,6 +78,8 @@ async function registerWorker(data) {
 	return result;
 }
 async function login(phone, password, tenant_id) {
+	console.log(tenant_id);
+
 	const user = await prisma.users.findUnique({
 		where: { phone },
 		include: {
@@ -88,15 +90,16 @@ async function login(phone, password, tenant_id) {
 			},
 		},
 	});
-	const tenant = await prisma.tenants.findUnique({
-		where: { id: user.tenant_id },
-	});
 
 	if (!user)
 		throw {
 			message: "Foydalanuvchi topilmadi",
 			statusCode: 404,
-		};
+      };
+
+	const tenant = await prisma.tenants.findUnique({
+		where: { id: user?.tenant_id },
+	});
 	// 3. Statusni tekshirish
 	if (user.status !== "ACTIVE") {
 		throw {

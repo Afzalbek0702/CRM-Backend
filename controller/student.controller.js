@@ -3,7 +3,7 @@ import { sendSuccess, sendError } from "../lib/response.js";
 
 export async function getAllStudents(req, res) {
 	try {
-		const rows = await studentService.getAll(req.tenantId);
+		const rows = await studentService.getAll(req.tenantId,req.user);
 		sendSuccess(res, rows);
 	} catch (error) {
 		sendError(
