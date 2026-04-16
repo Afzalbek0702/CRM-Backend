@@ -70,7 +70,7 @@ async function TopDebtors(tenant_id) {
 				payments: {
 					where: { status: "ACTIVE" },
 					orderBy: { paid_at: "desc" },
-					 // Oxirgi to'lovni olish uchun
+					// Oxirgi to'lovni olish uchun
 				},
 			},
 			orderBy: {
@@ -78,30 +78,30 @@ async function TopDebtors(tenant_id) {
 			},
 		});
 
-		return debtors.map((student) => {
+		return debtors.map(student => {
 			const totalCoursePrice = student.enrollments.reduce(
 				(sum, en) => sum + Number(en.groups.price || 0),
 				0,
 			);
-         const total_paid = student.payments.reduce(
-            (sum, p) => sum + Number(p.amount || 0),
-            0,
-         );
+			const total_paid = student.payments.reduce(
+				(sum, p) => sum + Number(p.amount || 0),
+				0,
+			);
 			// 2. Jami to'lagan summasini topish (balance va kurs narxidan kelib chiqib)
 			// Balans = Jami To'lov - Jami Kurs Narxi -> Jami To'lov = Balans + Jami Kurs Narxi
 			// Lekin bizda balans manfiy. Shuning uchun:
 			const currentBalance = Number(student.balance);
-         const debt_amount = total_paid - totalCoursePrice;
+			const debt_amount = total_paid - totalCoursePrice;
 			const lastPayment = student.payments[0];
 
 			return {
 				student_id: student.id,
 				full_name: student.full_name,
 				group_name:
-					student.enrollments.map((en) => en.groups.name).join(", ") ||
+					student.enrollments.map(en => en.groups.name).join(", ") ||
 					"Guruhsiz",
 				course_price: totalCoursePrice,
-				total_paid: total_paid, 
+				total_paid: total_paid,
 				debt_amount: Math.abs(debt_amount),
 				status: student.status,
 				last_payment_date: lastPayment
@@ -138,7 +138,7 @@ async function TodayLessons(tenant_id) {
 		orderBy: { lesson_time: "asc" },
 	});
 
-	return lessons.map((g) => ({
+	return lessons.map(g => ({
 		id: g.id,
 		group_name: g.name,
 		lesson_time: g.lesson_time,
@@ -167,7 +167,7 @@ async function AbsentStudents(tenant_id) {
 		},
 		include: {
 			enrollments: {
-				where: { students: { status: "ACTIVE" } },
+				where: { status: "ACTIVE", students: { status: "ACTIVE" } },
 				include: { students: true },
 			},
 		},
@@ -181,7 +181,7 @@ async function AbsentStudents(tenant_id) {
 	});
 
 	const attMap = new Map(
-		attendanceRecords.map((att) => [`${att.group_id}-${att.student_id}`, att]),
+		attendanceRecords.map(att => [`${att.group_id}-${att.student_id}`, att]),
 	);
 
 	const absent = [];

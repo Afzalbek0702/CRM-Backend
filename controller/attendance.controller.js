@@ -33,62 +33,62 @@ export async function getAttendance(req, res) {
 			Fri: 5,
 			Sat: 6,
 		};
-		const numericLessonDays = group.lesson_days.map((d) =>
+		const numericLessonDays = group.lesson_days.map(d =>
 			typeof d === "string" ? dayNameToNumber[d] : d,
 		);
 
-	const attendanceData = students.map((student) => {
-		const studentDays = [];
-		const lastDay = new Date(year, mon, 0).getDate();
+		const attendanceData = students.map(student => {
+			const studentDays = [];
+			const lastDay = new Date(year, mon, 0).getDate();
 
-		// O'quvchining guruhga qo'shilgan sanasi
-		const rawJoinedAt = student.enrollments[0]?.joined_at;
-		const joinDate = rawJoinedAt ? new Date(rawJoinedAt) : null;
-		if (joinDate) joinDate.setHours(0, 0, 0, 0);
+			// O'quvchining guruhga qo'shilgan sanasi
+			const rawJoinedAt = student.enrollments[0]?.joined_at;
+			const joinDate = rawJoinedAt ? new Date(rawJoinedAt) : null;
+			if (joinDate) joinDate.setHours(0, 0, 0, 0);
 
-		for (let day = 1; day <= lastDay; day++) {
-			const dateObj = new Date(year, mon - 1, day);
-			const dayOfWeek = dateObj.getDay();
-			const isoDay = dayOfWeek === 0 ? 7 : dayOfWeek;
-			const isLessonDay =
-				numericLessonDays.includes(dayOfWeek) ||
-				numericLessonDays.includes(isoDay);
+			for (let day = 1; day <= lastDay; day++) {
+				const dateObj = new Date(year, mon - 1, day);
+				const dayOfWeek = dateObj.getDay();
+				const isoDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+				const isLessonDay =
+					numericLessonDays.includes(dayOfWeek) ||
+					numericLessonDays.includes(isoDay);
 
-			if (isLessonDay) {
-				const dateStr = `${month}-${day.toString().padStart(2, "0")}`;
+				if (isLessonDay) {
+					const dateStr = `${month}-${day.toString().padStart(2, "0")}`;
 
-				// 1. O'quvchi qo'shilgan sanadan oldingi kunmi?
-				const isBeforeJoined = joinDate && dateObj < joinDate;
+					// 1. O'quvchi qo'shilgan sanadan oldingi kunmi?
+					const isBeforeJoined = joinDate && dateObj < joinDate;
 
-				let currentStatus = null;
+					let currentStatus = null;
 
-				if (isBeforeJoined) {
-					// Hali guruhda bo'lmagan davri uchun maxsus status
-					currentStatus = "NOT_ENROLLED";
-				} else {
-					// Bazadan davomatni qidiramiz
-					const record = allAttendance.find(
-						(a) =>
-							a.student_id === student.id &&
-							a.lesson_date.toISOString().split("T")[0] === dateStr,
-					);
-					currentStatus = record ? record.status : null;
+					if (isBeforeJoined) {
+						// Hali guruhda bo'lmagan davri uchun maxsus status
+						currentStatus = "NOT_ENROLLED";
+					} else {
+						// Bazadan davomatni qidiramiz
+						const record = allAttendance.find(
+							a =>
+								a.student_id === student.id &&
+								a.lesson_date.toISOString().split("T")[0] === dateStr,
+						);
+						currentStatus = record ? record.status : null;
+					}
+
+					studentDays.push({
+						date: dateStr,
+						isLessonDay,
+						status: currentStatus,
+					});
 				}
-
-				studentDays.push({
-					date: dateStr,
-					isLessonDay,
-					status: currentStatus,
-				});
 			}
-		}
 
-		return {
-			student_id: student.id,
-			full_name: student.full_name,
-			days: studentDays,
-		};
-	});
+			return {
+				student_id: student.id,
+				full_name: student.full_name,
+				days: studentDays,
+			};
+		});
 
 		sendSuccess(res, attendanceData);
 	} catch (err) {
@@ -102,8 +102,11 @@ export async function setAttendance(req, res) {
 	try {
 		// 1. Agar massiv kelsa (Ommaviy saqlash)
 		if (Array.isArray(data)) {
+			// NOT_ENROLLED bo'lganlarni bazaga yozmaymiz, ularni filtrlab tashlaymiz
+			const validData = data.filter(item => item.status !== "NOT_ENROLLED");
+
 			const results = await Promise.all(
-				data.map((item) =>
+				validData.map(item =>
 					attendanceService.set({
 						...item,
 						tenant_id: req.tenantId,
@@ -111,6 +114,15 @@ export async function setAttendance(req, res) {
 				),
 			);
 			return sendSuccess(res, results, 200);
+		}
+
+		// Yakka tartibda kelganda ham tekshiramiz
+		if (data.status === "NOT_ENROLLED") {
+			return sendError(
+				res,
+				"A'zo bo'lmagan o'quvchiga davomat qo'yib bo'lmaydi",
+				400,
+			);
 		}
 
 		// 2. Agar bitta ob'ekt kelsa (Eski usul)

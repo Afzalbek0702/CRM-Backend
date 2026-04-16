@@ -173,8 +173,8 @@ async function updatePassword(userId, oldPassword, newPassword, tenant_id) {
 
 	const match = await bcrypt.compare(oldPassword, user.password_hash);
 	if (!match) throw { message: "Eski password noto‘g‘ri", statusCode: 400 };
-
-	const newHash = await bcrypt.hash(newPassword, 10);
+   const salt = await bcrypt.genSalt(10);
+	const newHash = await bcrypt.hash(newPassword, salt);
 
 	return await prisma.users.update({
 		where: { id: parseInt(userId) },

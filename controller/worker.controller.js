@@ -10,37 +10,22 @@ export async function getUsers(req, res) {
 	}
 }
 export async function update(req, res) {
-	const { full_name, phone, position, salary, birthday, img, user_id } =
-		req.body;
-	if (
-		!full_name ||
-		!phone ||
-		!position ||
-		!salary ||
-		!birthday ||
-		!req.params.id ||
-		!user_id
-	)
-		return sendError(
-			res,
-			"Barcha maydonlar to'ldirilishi kerak! full_name, phone, position, salary, birthday, img, user_id, id",
-			400,
-		);
+	const { id } = req.params;
+	const body = req.body; // Barcha maydonlar shu yerda
+
+	if (!id || !body.user_id) {
+		return sendError(res, "ID va user_id bo'lishi shart!", 400);
+	}
+
 	try {
 		const data = await workerService.update({
-			full_name,
-			phone,
-			position,
-			salary,
-			birthday,
-			img,
-			id: req.params.id,
-			user_id,
+			...body,
+			id: id,
 			tenant_id: req.tenantId,
 		});
 		sendSuccess(res, data);
 	} catch (error) {
-		sendError(res, "Yangilashda xatolik yuz berdi", 500, error);
+		sendError(res, "Yangilashda xatolik yuz berdi", 500, error.message);
 	}
 }
 
