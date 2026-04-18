@@ -1,10 +1,27 @@
 import studentService from "../services/student.service.js";
 import { sendSuccess, sendError } from "../lib/response.js";
+import { getPagination } from "../utils/pagination.js";
 
 export async function getAllStudents(req, res) {
+	const { page, limit, skip } = getPagination(req.query);
+
 	try {
-		const rows = await studentService.getAll(req.tenantId,req.user);
-		sendSuccess(res, rows);
+		const result = await studentService.getAll(
+			req.tenantId,
+			req.user,
+			limit,
+			skip,
+		);
+		sendSuccess(res, result);
+		// sendSuccess(res, {
+		// 	meta: {
+		// 		page,
+		// 		limit,
+		// 		total: result.total,
+		// 		totalPages: Math.ceil(result.total / limit),
+		// 	},
+		// 	data: result.data,
+		// });
 	} catch (error) {
 		sendError(
 			res,
@@ -87,7 +104,15 @@ export async function updateStudentStatus(req, res) {
 	if (!req.params.id || !status) {
 		return sendError(res, "ID va status kerak", 400);
 	}
-	const allowed = ["ACTIVE", "INACTIVE", "GRADUATED", "DELETED", "DEBTOR","FROZEN", "ARCHIVED"];
+	const allowed = [
+		"ACTIVE",
+		"INACTIVE",
+		"GRADUATED",
+		"DELETED",
+		"DEBTOR",
+		"FROZEN",
+		"ARCHIVED",
+	];
 	if (!allowed.includes(status)) {
 		return sendError(res, "Noto‘g‘ri status", 400);
 	}

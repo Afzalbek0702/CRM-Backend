@@ -52,69 +52,7 @@ async function MonthlyIncome(tenant_id) {
 	};
 }
 
-async function TopDebtors(tenant_id) {
-	try {
-		const debtors = await prisma.students.findMany({
-			where: {
-				tenant_id: tenant_id,
-				status: "ACTIVE",
-				balance: { lt: 0 }, // Faqat balansi minusdagilar
-			},
-			include: {
-				enrollments: {
-					where: { status: "ACTIVE" },
-					include: {
-						groups: true, // Kurs narxini olish uchun
-					},
-				},
-				payments: {
-					where: { status: "ACTIVE" },
-					orderBy: { paid_at: "desc" },
-					// Oxirgi to'lovni olish uchun
-				},
-			},
-			orderBy: {
-				balance: "asc", // Eng katta qarzdorlar birinchi
-			},
-		});
 
-		return debtors.map(student => {
-			const totalCoursePrice = student.enrollments.reduce(
-				(sum, en) => sum + Number(en.groups.price || 0),
-				0,
-			);
-			const total_paid = student.payments.reduce(
-				(sum, p) => sum + Number(p.amount || 0),
-				0,
-			);
-			// 2. Jami to'lagan summasini topish (balance va kurs narxidan kelib chiqib)
-			// Balans = Jami To'lov - Jami Kurs Narxi -> Jami To'lov = Balans + Jami Kurs Narxi
-			// Lekin bizda balans manfiy. Shuning uchun:
-			const currentBalance = Number(student.balance);
-			const debt_amount = total_paid - totalCoursePrice;
-			const lastPayment = student.payments[0];
-
-			return {
-				student_id: student.id,
-				full_name: student.full_name,
-				group_name:
-					student.enrollments.map(en => en.groups.name).join(", ") ||
-					"Guruhsiz",
-				course_price: totalCoursePrice,
-				total_paid: total_paid,
-				debt_amount: Math.abs(debt_amount),
-				status: student.status,
-				last_payment_date: lastPayment
-					? lastPayment.created_at
-					: "To'lov qilinmagan",
-				phone: student.phone,
-			};
-		});
-	} catch (error) {
-		console.error("Detailed Debtors Error:", error);
-		throw error;
-	}
-}
 
 async function TodayLessons(tenant_id) {
 	// 1. O'zbekiston vaqti bo'yicha bugungi kunni aniqlash
@@ -230,58 +168,82 @@ async function AbsentStudents(tenant_id) {
 
 async function GetDebtAnalysis(tenant_id) {
 	try {
-		// 1. Hozirgi barcha qarzdorlarni olish
-		const debtors = await prisma.students.findMany({
+		// 1. Barcha aktiv o'quvchilarni barcha kerakli bog'liqliklari bilan olish
+		const students = await prisma.students.findMany({
 			where: {
 				tenant_id: tenant_id,
 				status: "ACTIVE",
-				balance: { lt: 0 }, // balance < 0
 			},
-			select: {
-				balance: true,
-				last_billed_at: true,
+			include: {
+				enrollments: {
+					where: { status: "ACTIVE" },
+					include: { groups: true },
+				},
+				payments: {
+					where: { status: "ACTIVE" },
+				},
 			},
 		});
 
-		// 2. Summani hisoblashda Decimal'ni xavfsiz Number'ga o'tkazamiz
-		const totalAmount = debtors.reduce((sum, s) => {
-			const b = s.balance ? Number(s.balance) : 0;
-			return sum + Math.abs(b);
-		}, 0);
-
-		// 3. O'tgan oygi qarzdorlar sonini hisoblash
 		const now = new Date();
 		const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-		const oldDebtorsCount = await prisma.students.count({
-			where: {
-				tenant_id: tenant_id,
-				status: "ACTIVE",
-				balance: { lt: 0 },
-				// last_billed_at shu oydan oldin bo'lsa, demak u eski qarzdor
-				OR: [
-					{ last_billed_at: { lt: currentMonthStart } },
-					{ last_billed_at: null },
-				],
-			},
+		let currentDebtorCount = 0;
+		let oldDebtorsCount = 0;
+		let totalDebtAmount = 0;
+
+		students.forEach(student => {
+			const currentBalance = Number(student.balance || 0);
+
+			// Guruhlar narxi yig'indisi
+			const totalCoursePrice = student.enrollments.reduce(
+				(sum, en) => sum + Number(en.groups?.price || 0),
+				0,
+			);
+
+			// Jami to'lovlar yig'indisi
+			const totalPaid = student.payments.reduce(
+				(sum, p) => sum + Number(p.amount || 0),
+				0,
+			);
+
+			// QARZDORLIK MANTIQI
+			const debtFromBalance = currentBalance < 0 ? Math.abs(currentBalance) : 0;
+			const debtFromPrice =
+				totalPaid < totalCoursePrice ? totalCoursePrice - totalPaid : 0;
+
+			// Ikkala usuldan eng kattasini qarz deb olamiz
+			const finalDebt = Math.max(debtFromBalance, debtFromPrice);
+
+			if (finalDebt > 0) {
+				currentDebtorCount++;
+				totalDebtAmount += finalDebt;
+
+				// ESKI QARZDORLIKNI ANIQLASH
+				// Agar oxirgi hisob-kitob (billing) o'tgan oyda bo'lgan bo'lsa
+				const isOld =
+					!student.last_billed_at ||
+					new Date(student.last_billed_at) < currentMonthStart;
+				if (isOld) {
+					oldDebtorsCount++;
+				}
+			}
 		});
 
-		const currentCount = debtors.length;
-
-		// 4. Farqni hisoblash
+		// 2. Farqni (Percentage) hisoblash
 		let diffPercentage = 0;
 		if (oldDebtorsCount > 0) {
 			diffPercentage =
-				((currentCount - oldDebtorsCount) / oldDebtorsCount) * 100;
-		} else if (currentCount > 0) {
+				((currentDebtorCount - oldDebtorsCount) / oldDebtorsCount) * 100;
+		} else if (currentDebtorCount > 0) {
 			diffPercentage = 100;
 		}
 
 		return {
-			debtorCount: currentCount,
-			totalDebtAmount: totalAmount,
-			diffPercentage: diffPercentage,
-			trend: currentCount >= oldDebtorsCount ? "up" : "down",
+			debtorCount: currentDebtorCount,
+			totalDebtAmount: totalDebtAmount,
+			diffPercentage: Number(diffPercentage.toFixed(1)), // 12.5% ko'rinishida
+			trend: currentDebtorCount >= oldDebtorsCount ? "up" : "down",
 		};
 	} catch (error) {
 		console.error("Debt Analysis Error:", error);
@@ -350,7 +312,6 @@ export default {
 	AbsentStudents,
 	MonthlyIncome,
 	TodayLessons,
-	TopDebtors,
 	GetDebtAnalysis,
 	GetDashboardStats,
 };

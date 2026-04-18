@@ -79,3 +79,11 @@ export async function deletePayment(req, res) {
 		sendError(res, "To'lovni o'chirishda xatolik yuz berdi", 500, error);
 	}
 }
+export async function TopDebtors(req, res) {
+	try {
+		const topDebtors = await paymentService.TopDebtors(req.tenantId);
+		sendSuccess(res, topDebtors);
+	} catch (error) {
+		sendError(res, "Server xatosi", 500, error);
+	}
+}

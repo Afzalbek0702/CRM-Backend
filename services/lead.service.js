@@ -4,9 +4,16 @@ async function create(data) {
 	const { full_name, phone, source, interested_course, comment, tenant_id } =
 		data;
 	return await prisma.leads.create({
-		data: { full_name, phone, source, interested_course, comment, tenant_id },
+		data: {
+			full_name,
+			phone: phone.length == 12 ? phone : null,
+			source,
+			interested_course,
+			comment,
+			tenant_id,
+		},
 	});
-}
+}  
 
 async function getAll(tenant_id) {
 	return await prisma.leads.findMany({
@@ -33,7 +40,7 @@ async function update(data) {
 }
 
 async function convertToGroup(leadId, group_id, tenant_id) {
-	return await prisma.$transaction(async (tx) => {
+	return await prisma.$transaction(async tx => {
 		const lead = await tx.leads.findUnique({
 			where: { tenant_id: tenant_id, id: parseInt(leadId) },
 		});
@@ -81,7 +88,7 @@ async function deleteById(id, tenant_id) {
 }
 
 async function convertToStudent(leadId, tenant_id) {
-	return await prisma.$transaction(async (tx) => {
+	return await prisma.$transaction(async tx => {
 		// 1. Leadni qidirib topish
 		const lead = await tx.leads.findUnique({
 			where: {

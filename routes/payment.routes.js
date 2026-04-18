@@ -8,6 +8,11 @@ router.get(
 	requireRole("CEO", "ADMIN", "MANAGER","TEACHER"),
 	paymentController.getAllPayments,
 );
+router.get(
+	"/debtors",
+	requireRole("CEO", "ADMIN", "MANAGER"),
+	paymentController.TopDebtors,
+);
 router.post(
 	"/",
 	requireRole("CEO", "ADMIN", "MANAGER"),

@@ -3,7 +3,7 @@ const now = new Date();
 const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-async function getAll(tenant_id, user) {
+async function getAll(tenant_id, user, limit, skip) {
 	// 1. Asosiy filtr obyektini yaratamiz
 	const where = {
 		tenant_id: tenant_id,
@@ -25,30 +25,35 @@ async function getAll(tenant_id, user) {
 	}
 
 	// 3. Prisma orqali ma'lumotlarni olamiz
-	const students = await prisma.students.findMany({
-		where: where,
-		include: {
-			enrollments: {
-				where: {
-					status: "ACTIVE",
-					// Include ichida ham o'qituvchi filtrini saqlaymiz
-					...(user.role === "TEACHER" && {
+	const [students, total] = await Promise.all([
+		prisma.students.findMany({
+			where,
+			// skip,
+			// take: limit,
+			include: {
+				enrollments: {
+					where: {
+						status: "ACTIVE",
+						...(user.role === "TEACHER" && {
+							groups: {
+								teacher_id: user.teacher_id,
+							},
+						}),
+					},
+					orderBy: { joined_at: "desc" },
+					take: 1,
+					include: {
 						groups: {
-							teacher_id: user.teacher_id,
+							select: { id: true, name: true },
 						},
-					}),
-				},
-				orderBy: { joined_at: "desc" },
-				take: 1,
-				include: {
-					groups: {
-						select: { id: true, name: true },
 					},
 				},
 			},
-		},
-		orderBy: { full_name: "asc" },
-	});
+			orderBy: { full_name: "asc" },
+		}),
+
+		// prisma.students.count({ where }),
+	]);
 
 	// 4. To'lovlarni hisoblash (Faqat filtrlangan o'quvchilar uchun)
 	const payments = await prisma.payments.groupBy({
@@ -58,7 +63,7 @@ async function getAll(tenant_id, user) {
 				gte: monthStart,
 				lt: monthEnd,
 			},
-			student_id: { in: students.map((s) => s.id) },
+			student_id: { in: students.map(s => s.id) },
 		},
 		_sum: { amount: true },
 		_max: { paid_at: true },
@@ -99,7 +104,7 @@ async function getAll(tenant_id, user) {
 }
 async function getById(id, tenant_id) {
 	const student = await prisma.students.findUnique({
-		where: {tenant_id:tenant_id, id: parseInt(id) },
+		where: { tenant_id: tenant_id, id: parseInt(id) },
 		include: {
 			enrollments: {
 				where: { status: "ACTIVE" },
@@ -156,31 +161,35 @@ async function getById(id, tenant_id) {
 	};
 }
 async function create(data) {
-   const existing = await prisma.students.findFirst({
-      where: {
-         tenant_id:data.tenant_id,
-         phone: data.phone,
-      }
-   })
-   if (existing) {
-      throw { message: "Bu telefon raqam bilan o'quvchi allaqachon mavjud", statusCode: 400 };
-   }
+	const existing = await prisma.students.findFirst({
+		where: {
+			tenant_id: data.tenant_id,
+			phone: data.phone,
+		},
+	});
+	if (existing) {
+		throw {
+			message: "Bu telefon raqam bilan o'quvchi allaqachon mavjud",
+			statusCode: 400,
+		};
+	}
 
 	return await prisma.students.create({
 		data: {
 			full_name: data.full_name,
-			phone: data.phone,
+			phone: data.phone.length == 12 ? data.phone : null,
 			birthday: data.birthday ? new Date(data.birthday) : null,
 			parents_name: data.parents_name,
-         parents_phone: data.parents_phone,
-         tenant_id:data.tenant_id
+			parents_phone:
+				data.parents_phone.length == 12 ? data.parents_phone : null,
+			tenant_id: data.tenant_id,
 		},
 	});
 }
 
 async function update(id, data) {
 	return await prisma.students.update({
-		where: {tenant_id:data.tenant_id, id: parseInt(id) },
+		where: { tenant_id: data.tenant_id, id: parseInt(id) },
 		data: {
 			full_name: data.full_name,
 			phone: data.phone,
@@ -193,7 +202,7 @@ async function update(id, data) {
 
 async function updateStatus(id, status, tenant_id) {
 	return await prisma.students.update({
-		where: {tenant_id:tenant_id, id: parseInt(id) },
+		where: { tenant_id: tenant_id, id: parseInt(id) },
 		data: { status },
 	});
 }
@@ -218,7 +227,7 @@ async function hardDelete(id, tenant_id) {
 async function getStudentProfile(id, tenant_id) {
 	const studentId = parseInt(id);
 	const data = await prisma.students.findUnique({
-		where: {tenant_id:tenant_id, id: studentId },
+		where: { tenant_id: tenant_id, id: studentId },
 		include: {
 			enrollments: {
 				include: { groups: true },
@@ -254,12 +263,12 @@ async function getStudentProfile(id, tenant_id) {
 			status: data.status,
 			balance: totalDebt - totalPaid,
 		},
-		attendance: data.attendance.map((a) => ({
+		attendance: data.attendance.map(a => ({
 			lesson_date: a.lesson_date,
 			status: a.status,
 			group_name: a.groups?.name,
 		})),
-		payments: data.payments.map((p) => ({
+		payments: data.payments.map(p => ({
 			amount: p.amount,
 			paid_at: p.paid_at,
 			group_name: p.groups?.name,
@@ -270,11 +279,11 @@ async function getStudentProfile(id, tenant_id) {
 async function transferStudent(data) {
 	const { student_id, from_group_id, to_group_id, tenant_id } = data;
 
-	return await prisma.$transaction(async (tx) => {
+	return await prisma.$transaction(async tx => {
 		// 1. Eskisini arxivlash
 		await tx.enrollments.updateMany({
-         where: {
-            tenant_id:tenant_id,
+			where: {
+				tenant_id: tenant_id,
 				student_id: parseInt(student_id),
 				group_id: parseInt(from_group_id),
 				status: "ACTIVE",
@@ -308,8 +317,8 @@ async function transferStudent(data) {
 
 async function removeStudentFromGroup(studentId, groupId, tenant_id) {
 	const result = await prisma.enrollments.updateMany({
-      where: {
-         tenant_id:tenant_id,
+		where: {
+			tenant_id: tenant_id,
 			student_id: parseInt(studentId),
 			group_id: parseInt(groupId),
 			status: "ACTIVE",
