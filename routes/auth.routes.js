@@ -8,7 +8,7 @@ router.post("/login", authController.login);
 router.post(
 	"/change-password",
 	authMiddleware,
-	requireRole("CEO", "ADMIN"),
+	requireRole("CEO", "ADMIN", "MANAGER", "TEACHER"),
 	authController.changePassword,
 );
 router.post(

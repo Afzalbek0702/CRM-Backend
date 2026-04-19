@@ -23,7 +23,7 @@ router.use("/dashboard",requireRole("CEO", "ADMIN", "MANAGER"),dashboardRoutes);
 router.use("/leads", requireRole("CEO", "ADMIN", "MANAGER"), leadsRoutes);
 router.use("/expense", requireRole("CEO", "ADMIN", "MANAGER"), expenseRoutes);
 
-router.use("/worker", requireRole("CEO", "ADMIN"), workerRoutes);
+router.use("/worker", requireRole("CEO", "ADMIN", "MANAGER"), workerRoutes);
 router.use("/archive", requireRole("CEO"), archiveRoutes);
 router.use("/salary", requireRole("CEO", "ADMIN"), salaryRouters);
 
