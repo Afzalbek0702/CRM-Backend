@@ -2,7 +2,7 @@
 	"crons": [
 		{
 			"path": "/api/billing/charge-monthly",
-			"schedule": "0 0 1 * *"
+			"schedule": "0 2 1 * *"
 		}
 	]
 }

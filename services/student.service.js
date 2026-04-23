@@ -98,7 +98,8 @@ async function getAll(tenant_id, user, limit, skip) {
 				? { id: enrollment.groups.id, name: enrollment.groups.name }
 				: null,
 			monthly_paid: payment.monthly_paid,
-			last_monthly_payment: payment.last_monthly_payment,
+         last_monthly_payment: payment.last_monthly_payment,
+         created_at:student.created_at
 		};
 	});
 }

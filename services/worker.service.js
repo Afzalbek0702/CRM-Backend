@@ -1,4 +1,5 @@
 import prisma from "../lib/prisma.js";
+import bcrypt from "bcrypt";
 
 async function getAll(tenant_id) {
 	const workers = await prisma.workers.findMany({

@@ -1,41 +1,59 @@
 import prisma from "../lib/prisma.js";
-
+import { formatDateForDB, getMonthRange } from "../utils/date.js";
 export async function chargeMonthlyFees() {
 	const now = new Date();
-	// Joriy oyning birinchi sanasi, soat 00:00:00
-	const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+	const { start: currentMonth, nextStart: nextMonth } = getMonthRange(now);
+	const currentMonthStr = formatDateForDB(currentMonth);
+	const nextMonthStr = formatDateForDB(nextMonth);
 
-	try {
-		// Tranzaksiya ichida bajarish tavsiya etiladi
-		const result = await prisma.$transaction(async (tx) => {
-			const updatedCount = await tx.$executeRaw`
-        UPDATE "students" s
-        SET 
-          balance = s.balance - sub.total_price,
-          "last_billed_at" = NOW()
-        FROM (
-          SELECT e.student_id, SUM(g.price) as total_price
-          FROM "enrollments" e
-          JOIN "groups" g ON e.group_id = g.id
-          WHERE e.status = 'ACTIVE'
-          GROUP BY e.student_id
-        ) as sub
-        WHERE s.id = sub.student_id 
-          AND s.status = 'ACTIVE'
-          -- Faqat shu oyda hali pul yechilmagan talabalarni filtrlaymiz
-          AND (s."last_billed_at" < ${startOfMonth} OR s."last_billed_at" IS NULL);
-      `;
+	// 1. Barcha aktiv tenantlarni olish
+	const tenants = await prisma.tenants.findMany({
+		where: { status: "ACTIVE" },
+		select: { id: true },
+	});
 
-			return updatedCount;
-		});
+	const summary = [];
 
-		return {
-			success: true,
-			updatedStudents: result,
-			billedAt: now.toISOString(),
-		};
-	} catch (error) {
-		console.error("CRITICAL: Billing execution failed:", error);
-		throw error; // API handler buni ushlab 500 qaytaradi
+	for (const tenant of tenants) {
+		try {
+			const result = await prisma.$transaction(async tx => {
+				// Shu tenant uchun billing
+				const billedStudents = await tx.$queryRaw`
+                    WITH students_to_charge AS (
+                        SELECT s.id, SUM(g.price) as total_fee
+                        FROM "students" s
+                        JOIN "enrollments" e ON s.id = e.student_id AND e.status = 'ACTIVE'
+                        JOIN "groups" g ON e.group_id = g.id AND g.status = 'ACTIVE'
+                        WHERE s.tenant_id = ${tenant.id}
+                          AND s.status = 'ACTIVE'
+                          AND e.next_billing_date <= ${currentMonthStr}::date
+                        GROUP BY s.id
+                    )
+                    UPDATE "students" s
+                    SET balance = s.balance - stc.total_fee, last_billed_at = NOW()
+                    FROM students_to_charge stc
+                    WHERE s.id = stc.id
+                    RETURNING s.id, s.balance;
+                `;
+
+				// Shu tenant uchun sanalarni yangilash
+				const updatedEnrollments = await tx.$executeRaw`
+                    UPDATE "enrollments"
+                    SET next_billing_date = ${nextMonthStr}::date
+                    WHERE status = 'ACTIVE'
+                      AND tenant_id = ${tenant.id}
+                      AND next_billing_date <= ${currentMonthStr}::date
+                `;
+
+				return {
+					tenantId: tenant.id,
+					count: billedStudents.length,
+				};
+			});
+			summary.push(result);
+		} catch (err) {
+			console.error(`Tenant ${tenant.id} billing error:`, err);
+		}
 	}
+	return summary;
 }

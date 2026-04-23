@@ -42,21 +42,18 @@ app.use(helmet());
 app.get("/api/billing/charge-monthly", async (req, res) => {
 	const authHeader = req.headers["authorization"];
 
-	// Vercel Cron yuboradigan Bearer tokenini tekshirish
 	if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
 		return res.status(401).json({ error: "Ruxsat berilmagan" });
 	}
 
 	try {
-		const result = await chargeMonthlyFees();
+		const result = await chargeMonthlyFees(); // Hamma tenantlar uchun ishlaydi
 		res.status(200).json({
 			success: true,
-			message: "To'lovlar muvaffaqiyatli hisoblandi",
-			details: result,
+			processedTenants: result,
 		});
 	} catch (error) {
-		console.error("Billing Error:", error);
-		res.status(500).json({ error: "Server xatoligi", message: error.message });
+		res.status(500).json({ error: error.message });
 	}
 });
 

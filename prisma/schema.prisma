@@ -74,6 +74,11 @@ model enrollments {
   archived_at DateTime? @db.Timestamp(6)
   groups      groups?   @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   students    students? @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  next_billing_date DateTime?     @db.Date
+
+//   @@unique([student_id, group_id, status])
+  @@index([student_id, status, next_billing_date])
+  @@index([next_billing_date, status]) // Cron query uchun kritik
 }
 
 model expenses {
@@ -134,6 +139,8 @@ model payments {
   deleted_at DateTime? @db.Timestamp(6)
   groups     groups?   @relation(fields: [group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   students   students? @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([tenant_id, student_id, paid_month, paid_at, status])
 }
 
 model rooms {
@@ -174,6 +181,9 @@ model students {
   attendance    attendance[]
   enrollments   enrollments[]
   payments      payments[]
+
+  @@index([tenant_id, status])
+  @@index([tenant_id, balance, status]) // Qarzdorlarni tez qidirish
 }
 
 model teachers {
@@ -200,7 +210,7 @@ model users {
   
   worker        workers?
   expenses      expenses[]
-  tenant_id     String?
+  tenant_id     String   @db.Uuid
   tenant        tenants? @relation(fields: [tenant_id], references: [id])
   @@map("users")
 }
