@@ -5,6 +5,6 @@ const router = Router();
 router.get("/",requireRole("CEO", "ADMIN", "MANAGER","TEACHER"), roomController.getAll);
 router.get("/:id",requireRole("CEO", "ADMIN", "MANAGER",), roomController.getById);
 router.post("/",requireRole("CEO", "ADMIN", "MANAGER"), roomController.create);
-router.put("/",requireRole("CEO", "ADMIN", "MANAGER",), roomController.update);
+router.put("/:id",requireRole("CEO", "ADMIN", "MANAGER",), roomController.update);
 router.delete("/:id",requireRole("CEO", "ADMIN", "MANAGER",), roomController.deleteById);
 export default router;
