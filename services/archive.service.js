@@ -28,10 +28,15 @@ async function getLeads(tenant_id) {
 }
 
 async function getGroups(tenant_id) {
-	return await prisma.groups.findMany({
-		where: { status: "ARCHIVED", tenant_id },
-		orderBy: { created_at: "desc" },
-	});
+   return await prisma.groups.findMany({
+			where: { status: "ARCHIVED", tenant_id },
+			include: {
+				teachers: {
+					select: { id: true, full_name: true },
+				},
+			},
+			orderBy: { created_at: "desc" },
+		});
 }
 
 async function getGroupById(id, tenant_id) {

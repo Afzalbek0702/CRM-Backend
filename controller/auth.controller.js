@@ -52,7 +52,7 @@ export async function login(req, res) {
 	const { phone, password } = req.body;
 
 	try {
-		const data = await authService.login(phone, password, req.tenantId);
+		const data = await authService.login(phone, password);
 		res.cookie("token", data.token, {
 			httpOnly: true,
 			secure: true,

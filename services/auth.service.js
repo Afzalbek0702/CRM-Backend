@@ -77,8 +77,7 @@ async function registerWorker(data) {
 	});
 	return result;
 }
-async function login(phone, password, tenant_id) {
-	console.log(tenant_id);
+async function login(phone, password) {
 
 	const user = await prisma.users.findUnique({
 		where: { phone },
