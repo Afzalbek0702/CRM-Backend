@@ -182,7 +182,7 @@ async function create(data) {
 			birthday: data.birthday ? new Date(data.birthday) : null,
 			parents_name: data.parents_name,
 			parents_phone:
-				data.parents_phone.length == 12 ? data.parents_phone : null,
+				data.parents_phone !== null && data.parents_phone?.length == 12 ? data.parents_phone : null,
 			tenant_id: data.tenant_id,
 		},
 	});
