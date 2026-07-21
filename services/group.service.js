@@ -55,6 +55,7 @@ async function create(data) {
 	const existingGroups = await prisma.groups.findMany({
 		where: {
 			tenant_id: tenant_id,
+			status:"ACTIVE",
 			room_id: parseInt(room_id),
 			lesson_days: {
 				hasSome: lesson_days,
