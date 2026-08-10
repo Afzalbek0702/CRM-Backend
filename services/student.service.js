@@ -41,7 +41,7 @@ async function getAll(tenant_id, user, limit, skip) {
 						}),
 					},
 					orderBy: { joined_at: "desc" },
-					take: 1,
+					// take: 1,
 					include: {
 						groups: {
 							select: { id: true, name: true },
@@ -83,7 +83,7 @@ async function getAll(tenant_id, user, limit, skip) {
 			monthly_paid: 0,
 			last_monthly_payment: null,
 		};
-		const enrollment = student.enrollments[0];
+		// const enrollment = student.enrollments[0];
 
 		return {
 			id: student.id,
@@ -94,9 +94,7 @@ async function getAll(tenant_id, user, limit, skip) {
 			birthday: student.birthday,
 			parents_name: student.parents_name,
 			parents_phone: student.parents_phone,
-			groups: enrollment
-				? { id: enrollment.groups.id, name: enrollment.groups.name }
-				: null,
+			groups: student.enrollments.map((enrollment) => ({ id: enrollment.groups.id, name: enrollment.groups.name, })),
 			monthly_paid: payment.monthly_paid,
          last_monthly_payment: payment.last_monthly_payment,
          created_at:student.created_at
