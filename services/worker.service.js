@@ -1,18 +1,30 @@
 import prisma from "../lib/prisma.js";
 import bcrypt from "bcrypt";
+import { calculateTeacherMonthlySalary } from "./teacherSalaryCalculate.js";
 
 async function getAll(tenant_id) {
 	const workers = await prisma.workers.findMany({
 		where: {
 			tenant_id: tenant_id,
 		},
-		include: {
+		select: {
+			id: true,
+			full_name: true,
+			phone: true,
+			position: true,
 			user: {
 				select: {
 					role: true,
-				},
-			},
-		},
+				}
+			}
+		}
+		// include: {
+		// 	user: {
+		// 		select: {
+		// 			role: true,
+		// 		},
+		// 	},
+		// },
 	});
 
 	return workers.map(worker => ({
@@ -21,6 +33,34 @@ async function getAll(tenant_id) {
 		user: undefined,
 	}));
 }
+async function getWorkerById(workerId,tenant_id ) {
+	const worker = await prisma.workers.findUnique({
+		where: {
+			tenant_id:tenant_id,
+			id: workerId,
+		},
+	})
+
+	if (!worker) {
+		throw new Error("Worker topilmadi")
+	}
+
+	let teacherSalary = null
+
+	if (
+		worker.salary_type === "PERCENTAGE"
+	) {
+		teacherSalary = await calculateTeacherMonthlySalary(
+			workerId, tenant_id
+		)
+	}
+
+	return {
+		...worker,
+		teacher_salary: teacherSalary,
+	}
+}
+
 
 async function updateRole(id, role, tenant_id) {
 	const ceo = await prisma.users.findUnique({
@@ -94,4 +134,5 @@ export default {
 	updateRole,
 	update,
 	deleteById,
+	getWorkerById
 };

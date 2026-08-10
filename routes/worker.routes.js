@@ -5,6 +5,7 @@ import { requireRole } from "../middleware/roleMiddleware.js";
 const router = express.Router();
 
 router.get("/", requireRole("CEO", "ADMIN","MANAGER"), workerController.getUsers);
+router.get('/:id',requireRole("CEO", "ADMIN","MANAGER"),workerController.getWorkerById)
 router.put("/:id", requireRole("CEO", "ADMIN"), workerController.update);
 router.patch(
 	"/:id/role",

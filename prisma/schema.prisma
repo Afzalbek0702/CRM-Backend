@@ -27,6 +27,7 @@ enum Status {
 enum SalaryType {
   CASH
   BANK_TRANSFER
+  PERCENTAGE
   OTHER
 }
 enum StudentStatus {
@@ -224,7 +225,7 @@ model workers {
   phone       String?   @db.VarChar(20)
   position    String    @db.VarChar(50) @default("Xodim")
   salary      Decimal?  @db.Decimal(10, 2)
-  salary_type String?   @db.VarChar(20) @default("CASH")
+  salary_type SalaryType @default(CASH)
   birthday    DateTime? @db.Date
   img         String?
   status      Status    @default(ACTIVE)

@@ -58,3 +58,12 @@ export async function deleteUser(req, res) {
 		);
 	}
 }
+export async function getWorkerById(req,res) {
+	const {id} = req.params
+	try {
+		const data = await workerService.getWorkerById(Number(id),req.tenantId)
+		sendSuccess(res,data)
+	} catch (error) {
+		sendError(res, "Failed to retrieve worker", 500, error);
+	}
+}
