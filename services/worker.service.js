@@ -12,9 +12,13 @@ async function getAll(tenant_id) {
 			full_name: true,
 			phone: true,
 			position: true,
+			salary:true,
+			salary_type:true,
+			img:true,
 			user: {
 				select: {
 					role: true,
+					id:true,
 				}
 			}
 		}
@@ -30,7 +34,7 @@ async function getAll(tenant_id) {
 	return workers.map(worker => ({
 		...worker,
 		role: worker.user.role,
-		user: undefined,
+		user_id:worker.user.id,
 	}));
 }
 async function getWorkerById(workerId,tenant_id ) {
